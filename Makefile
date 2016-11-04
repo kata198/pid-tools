@@ -1,5 +1,6 @@
 
-CFLAGS ?= -O3 -march=native -mtune=native -flto -Bdirect -Wall
+#CFLAGS ?= -O3 -march=native -mtune=native -flto -Bdirect -Wall
+CFLAGS ?= -O3 -Wall
 
 # Cause everything to recompile when CFLAGS changes, unless user is root (to support "sudo make install")
 WHOAMI=$(shell whoami)
