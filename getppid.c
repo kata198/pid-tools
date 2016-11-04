@@ -9,16 +9,26 @@
 #include <string.h>
 
 
+/*
+ * usage - print usage/help to stderr
+ */
 static inline void usage()
 {
     fputs("Usage: getppid [pid]\n", stderr);
     fputs("  Prints the parent process id (PPID) for a given pid.\n", stderr);
 }
 
-
+/*
+ * getPpid - Gets the parent process ID of a provided pid.
+ *
+ * If no parent id is present, "1" (init) is returned. This includes
+ * for pid 1 itself.
+ *
+ * pid - Search for parent of this pid.
+ */
 static pid_t getPpid(pid_t pid)
 {
-    char _buff[128] = { "/proc/" };
+    char _buff[128] = { '/', 'p', 'r', 'o', 'c', '/' };
     char *buff = _buff;
     int fd;
     pid_t ret;
@@ -34,7 +44,8 @@ static pid_t getPpid(pid_t pid)
         fprintf(stderr, "Error trying to read from '%s' [%d]: %s\n", buff, errno, strerror(errno));
     }
     close(fd);    
-    for(unsigned int numSpaces=0; numSpaces < 3; buff = &buff[1] ) {
+    for(unsigned int numSpaces=0; numSpaces < 3; buff = &buff[1] )
+    {
         if ( *buff == ' ' ) {
             numSpaces++;
         }
@@ -54,6 +65,14 @@ static pid_t getPpid(pid_t pid)
 }
 
 
+/**
+ * main - takes one argument, the search pid.
+ *
+ * Prints the child's parent pid to stdout. If child has no parent,
+ *  1 is printed (init). This includes when "1" is queried, i.e. "ppid(1) = 1"
+ *
+ *  TODO: Check for --help
+ */
 int main(int argc, char* argv[])
 {
 

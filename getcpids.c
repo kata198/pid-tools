@@ -42,8 +42,12 @@ typedef struct {
     void *next;
 }compound_pids;
 
+/* CP_NEXT - Returns the "next" compound_pids, cast correctly */
 #define CP_NEXT(cp) ((compound_pids *)cp->next)
 
+/* cp_init - 
+ *  Create a compound_pids object, zeroed-out.
+ */
 static inline compound_pids* cp_init(void)
 {
     compound_pids *ret;
@@ -52,6 +56,11 @@ static inline compound_pids* cp_init(void)
     return ret;
 }
 
+/*
+ * cp_extend - Extends a compound_pids struct by filling in "next".
+ *
+ *   Returns the extension.
+ */
 static compound_pids* cp_extend(compound_pids *toExtend)
 {
     compound_pids *extension;
@@ -62,6 +71,19 @@ static compound_pids* cp_extend(compound_pids *toExtend)
     return extension;
 }
 
+/*
+ * cp_add - Add an element to the provided compound_pids struct, #cp, and if necessary
+ *   extend it.
+ *
+ *   Returns the next compound_pids for adding (so "cp" if there is unused space still,
+ *     otherwise the added extension is returned. )
+ *
+ *     offset - int pointer to current offset within compound_pids structure.
+ *       This will be incremented as each item is added, and reset when extended.
+ *       First add on an empty compound_pids structure should be '0'
+ *
+ *     pid - pid_t to add to cp or its extension (if extension is required)
+ */
 static inline compound_pids* cp_add(compound_pids *cp, unsigned int *offset, pid_t pid)
 {
     if ( *offset == 6 )
@@ -79,6 +101,29 @@ static inline compound_pids* cp_add(compound_pids *cp, unsigned int *offset, pid
     return cp;
 }
 
+/*
+ * cp_to_list - Convert a compound_pids structure and all extensions
+ *   into a null-terminated array.
+ *
+ *   Returns an allocated pointer to a pid_t array, with the final
+ *    entry being "0" (not a valid pid).
+ *
+ *   cp - The head compound_pids structure
+ *
+ *   numEntries - The number of entries in cp and all extensions.
+ *
+ *   NOTE: since "numEntries" is required, null-terminating really
+ *     isn't required. 
+ *
+ *     This makes it simpler if one-day I decide to turn this stuff
+ *     into a shared-object. "numEntries" could then be calculated by
+ *     a yet-existing "cp_len" function.
+ *
+ *     I prefer to leave it null-terminated, so that it may have use
+ *     in external functions which rely on such and don't take a 
+ *     length param, rather than relying on the user realloc'ing in this
+ *     case.
+ */
 static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
 {
     pid_t *ret, *curPid, *retPtr;
@@ -107,6 +152,14 @@ after_loop:
     return ret;
 }
 
+/*
+ * getPpid - Gets the parent process ID of a provided pid.
+ *
+ * If no parent id is present, "1" (init) is returned. This includes
+ * for pid 1 itself.
+ *
+ * pid - Search for parent of this pid.
+ */
 static pid_t getPpid(pid_t pid)
 {
     char _buff[128] = { "/proc/" };
@@ -145,6 +198,13 @@ static pid_t getPpid(pid_t pid)
 }
 
 
+/**
+ * main - Takes one argument, the pid. Will scan
+ *    all accessable pids on the system, and print 
+ *    a space-separated list of child pids (of next level)
+ *
+ *    TODO: Check for --help
+ */
 int main(int argc, char* argv[])
 {
 
@@ -213,20 +273,5 @@ int main(int argc, char* argv[])
 
     return 0;
 
-/*    pid_t pid, ppid;
-
-
-    printf("%lu\n", sizeof(void *));
-
-
-    ppid = getPpid(pid);
-    if ( ppid == 0) {
-        fprintf(stderr, "Invalid pid: %u\n", pid);
-        return 1;
-    }
-
-    printf("%u\n", ppid);
-*/
-    return 0;
 
 }
