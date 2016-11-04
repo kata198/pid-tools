@@ -1,5 +1,10 @@
 
+# Uncomment following line to use fastest CFLAGS for gcc.
+#   program will only run on hardware that is equal or better to
+#   the current host.
 #CFLAGS ?= -O3 -march=native -mtune=native -flto -Bdirect -Wall
+
+# Default lame CFLAGS.
 CFLAGS ?= -O3 -Wall
 
 # Cause everything to recompile when CFLAGS changes, unless user is root (to support "sudo make install")
