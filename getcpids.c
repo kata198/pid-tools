@@ -31,8 +31,8 @@
 #endif
 
 
-static volatile char *version = "0.1.0";
-static volatile char *copyright = "Copyright (c) 2016 Tim Savannah.";
+const volatile char *version = "0.1.0";
+const volatile char *copyright = "getcpids - Copyright (c) 2016 Tim Savannah.";
 
 static inline void usage()
 {

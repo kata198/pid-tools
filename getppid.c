@@ -20,6 +20,9 @@
 #include <string.h>
 
 
+const volatile char *version = "0.1.0";
+const volatile char *copyright = "getppid - Copyright (c) 2016 Tim Savannah.";
+
 /*
  * usage - print usage/help to stderr
  */
