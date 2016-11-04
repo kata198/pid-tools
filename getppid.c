@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2016 Timothy Savannah All Rights Reserved
+ *
+ * Licensed under terms of Gnu General Public License Version 2
+ *
+ * See "LICENSE" with the source distribution for details.
+ *
+ * getppid.c - "main" for "getppid" application -
+ *  Gets and prints the parent pid of a given pid
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

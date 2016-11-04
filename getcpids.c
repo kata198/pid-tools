@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2016 Timothy Savannah All Rights Reserved
+ *
+ * Licensed under terms of Gnu General Public License Version 2
+ *
+ * See "LICENSE" with the source distribution for details.
+ *
+ * getcpids.c - "main" for "getcpids" application -
+ *  Gets and prints the child pids for a given pid, if any.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
