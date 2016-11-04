@@ -6,6 +6,10 @@ WHOAMI=$(shell whoami)
 CFLAGS_HASH=$(shell echo "${CFLAGS}" | md5sum | tr ' ' '\n' | head -n1)
 CFLAGS_HASH_FILE=$(shell test "${WHOAMI}" != "root" && echo .cflags.${CFLAGS_HASH} || echo .cflags.*)
 
+PREFIX ?= $(shell test -w "/usr/bin" && echo "/usr" || echo "${HOME}")
+
+DESTDIR ?= ${PREFIX}
+
 DEPS = bin ${CFLAGS_HASH_FILE}
 
 ALL_FILES = bin/getppid \
@@ -19,6 +23,10 @@ clean:
 	rm -Rf bin
 	rm -f *.o
 	rm -f .cflags.*
+
+install: ${ALL_FILES}
+	mkdir -p "${DESTDIR}/bin"
+	install -m 775 ${ALL_FILES} "${DESTDIR}/bin"
 
 
 # When hash of CFLAGS changes, this unit causes all compiles to become invalidated
@@ -41,3 +49,5 @@ getcpids.o : getcpids.c
 
 bin/getcpids : ${DEPS} getcpids.o
 	gcc ${CFLAGS} getcpids.o -o bin/getcpids
+
+
