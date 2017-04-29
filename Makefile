@@ -24,7 +24,8 @@ DEPS = bin ${CFLAGS_HASH_FILE}
 
 ALL_FILES = bin/getppid \
 	bin/getcpids \
-	bin/isaparentof
+	bin/isaparentof \
+	bin/isachildof
 
 
 all: ${DEPS} ${ALL_FILES}
@@ -69,6 +70,13 @@ isaparentof.o : isaparentof.c ppid.c
 
 bin/isaparentof : ${DEPS} isaparentof.o
 	gcc ${USE_CFLAGS} isaparentof.o -o bin/isaparentof
+
+isachildof.o : isachildof.c ppid.c
+	gcc ${USE_CFLAGS} isachildof.c -c -o isachildof.o
+
+bin/isachildof : ${DEPS} isachildof.o
+	gcc ${USE_CFLAGS} isachildof.o -o bin/isachildof
+
 
 remake:
 	make clean
