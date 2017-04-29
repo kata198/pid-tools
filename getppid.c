@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "ppid.h"
 
 const volatile char *version = "0.1.0";
 const volatile char *copyright = "getppid - Copyright (c) 2016 Tim Savannah.";
@@ -31,53 +32,6 @@ static inline void usage()
     fputs("Usage: getppid [pid]\n", stderr);
     fputs("  Prints the parent process id (PPID) for a given pid.\n", stderr);
 }
-
-/*
- * getPpid - Gets the parent process ID of a provided pid.
- *
- * If no parent id is present, "1" (init) is returned. This includes
- * for pid 1 itself.
- *
- * pid - Search for parent of this pid.
- */
-static pid_t getPpid(pid_t pid)
-{
-    char _buff[128] = { '/', 'p', 'r', 'o', 'c', '/' };
-    char *buff = _buff;
-    int fd;
-    pid_t ret;
-
-    sprintf(&buff[6], "%u/stat", pid);
-
-    fd = open(buff, O_RDONLY);
-    if ( fd <= 0 ) {
-        return 0;
-    }
-
-    if ( read(fd, buff, 128) <= 0 ) {
-        fprintf(stderr, "Error trying to read from '%s' [%d]: %s\n", buff, errno, strerror(errno));
-    }
-    close(fd);    
-    for(unsigned int numSpaces=0; numSpaces < 3; buff = &buff[1] )
-    {
-        if ( *buff == ' ' ) {
-            numSpaces++;
-        }
-    }
-
-    unsigned int nextIdx = 1;
-    for( ; buff[nextIdx] != ' '; nextIdx++);
-
-    buff[nextIdx] = '\0';
-
-    ret = atoi(buff);
-    /* No parent means init is parent */
-    if(ret == 0)
-        ret = 1;
-    return ret;
-
-}
-
 
 /**
  * main - takes one argument, the search pid.

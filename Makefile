@@ -23,7 +23,8 @@ DESTDIR ?= ${PREFIX}
 DEPS = bin ${CFLAGS_HASH_FILE}
 
 ALL_FILES = bin/getppid \
-	bin/getcpids
+	bin/getcpids \
+	bin/isaparentof
 
 
 all: ${DEPS} ${ALL_FILES}
@@ -48,16 +49,27 @@ ${CFLAGS_HASH_FILE}:
 bin:
 	mkdir -p bin
 
-getppid.o : getppid.c
+ppid.o : ppid.c
+	gcc ${USE_CFLAGS} -DSHARED_LIB ppid.c -c -o ppid.o
+
+getppid.o : getppid.c ppid.c
 	gcc ${USE_CFLAGS} getppid.c -c -o getppid.o
 
 bin/getppid : ${DEPS}  getppid.o
 	gcc ${USE_CFLAGS} getppid.o -o bin/getppid
 
-getcpids.o : getcpids.c
+getcpids.o : getcpids.c ppid.c
 	gcc ${USE_CFLAGS} getcpids.c -c -o getcpids.o
 
 bin/getcpids : ${DEPS} getcpids.o
 	gcc ${USE_CFLAGS} getcpids.o -o bin/getcpids
 
+isaparentof.o : isaparentof.c ppid.c
+	gcc ${USE_CFLAGS} isaparentof.c -c -o isaparentof.o
 
+bin/isaparentof : ${DEPS} isaparentof.o
+	gcc ${USE_CFLAGS} isaparentof.o -o bin/isaparentof
+
+remake:
+	make clean
+	make all
