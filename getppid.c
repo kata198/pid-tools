@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "ppid.h"
+#include "pid_utils.h"
 
 const volatile char *version = "0.1.0";
 const volatile char *copyright = "getppid - Copyright (c) 2016 Tim Savannah.";
@@ -54,13 +55,14 @@ int main(int argc, char* argv[])
     }
 
 
-    pid = atoi(argv[1]);
-
-    ppid = getPpid(pid);
-    if ( ppid == 0) {
-        fprintf(stderr, "Invalid pid: %u\n", pid);
+    pid = strtoint(argv[1]);
+    if ( pid <= 0 )
+    {
+        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
         return 1;
     }
+
+    ppid = getPpid(pid);
 
     printf("%u\n", ppid);
 

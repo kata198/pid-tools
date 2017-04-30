@@ -20,16 +20,8 @@
 #include <dirent.h>
 #include <ctype.h>
 
-#ifdef __GNUC__
-  #define likely(x)    __builtin_expect(!!(x),1)
-  #define unlikely(x)  __builtin_expect(!!(x),0)
-  #define __hot __attribute__((hot))
-#else
-  #define likely(x)   x
-  #define unlikely(x) x
-  #define __hot
-#endif
-
+#include "pid_tools.h"
+#include "pid_utils.h"
 
 const volatile char *version = "0.1.0";
 const volatile char *copyright = "getcpids - Copyright (c) 2016 Tim Savannah.";
@@ -239,7 +231,12 @@ int main(int argc, char* argv[])
     }
 
 
-    providedPid = atoi(argv[1]);
+    providedPid = strtoint(argv[1]);
+    if ( providedPid <= 0 )
+    {
+        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
+        return 1;
+    }
 
     cpList = cp_init();
 

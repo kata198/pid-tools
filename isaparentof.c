@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "ppid.h"
+#include "pid_utils.h"
 
 const volatile char *version = "0.1.0";
 const volatile char *copyright = "isaparentof - Copyright (c) 2017 Tim Savannah.";
@@ -32,6 +33,7 @@ static inline void usage()
     fputs("Usage: isaparentof [ppid] [check pid]\n", stderr);
     fputs("  Checks if 'ppid' is a parent of any level for 'check pid'\n", stderr);
 }
+
 
 /**
  * main - takes two arguements, parent and check pid.
@@ -50,23 +52,20 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    errno = 0;
-
-    ppid = strtol(argv[1], NULL, 10);
-    if ( errno )
+    ppid = strtoint(argv[1]);
+    if ( ppid <= 0 )
     {
-        fprintf(stderr, "Error, ppid argument is not a valid integer.\n\n");
-        usage();
+        fprintf(stderr, "Parent PID is not a valid integer: '%s'\n", argv[1]);
         return 1;
     }
 
-    checkPid = strtol(argv[2], NULL, 10);
-    if ( errno )
+    checkPid = strtoint(argv[2]);
+    if ( ppid <= 0 )
     {
-        fprintf(stderr, "Error, checkpid argument is not a valid integer.\n\n");
-        usage();
+        fprintf(stderr, "Check PID is not a valid integer: '%s'\n", argv[2]);
         return 1;
     }
+        
 
     cur = getPpid(checkPid);
     if ( cur == 0 )
