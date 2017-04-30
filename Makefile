@@ -25,7 +25,8 @@ DEPS = bin ${CFLAGS_HASH_FILE}
 ALL_FILES = bin/getppid \
 	bin/getcpids \
 	bin/isaparentof \
-	bin/isachildof
+	bin/isachildof \
+	bin/getpcmd
 
 
 all: ${DEPS} ${ALL_FILES}
@@ -76,6 +77,12 @@ isachildof.o : isachildof.c ppid.c
 
 bin/isachildof : ${DEPS} isachildof.o
 	gcc ${USE_CFLAGS} isachildof.o -o bin/isachildof
+
+getpcmd.o : getpcmd.c
+	gcc ${USE_CFLAGS} getpcmd.c -c -o getpcmd.o
+
+bin/getpcmd : getpcmd.o
+	gcc ${USE_CFLAGS} getpcmd.o -o bin/getpcmd
 
 
 remake:
