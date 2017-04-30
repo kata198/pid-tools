@@ -9,7 +9,7 @@ CFLAGS ?= -O3
 
 
 # Actual flags to use.
-USE_CFLAGS = ${CFLAGS} -Wall -pipe
+USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe
 
 # Cause everything to recompile when CFLAGS changes, unless user is root (to support "sudo make install")
 WHOAMI=$(shell whoami)
