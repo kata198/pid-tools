@@ -1,2 +1,14 @@
+* Apr 30 2017 1.0.0
+- Add getpcmd to get the commandline string (optionally quoted) of a given pid
+- Add isparentof to determine if a pid is the parent of another pid, at any
+level (direct parent, parent-of-parent, etc)
+- Add ischildof to determine if a pid is the child of another pid, at any
+level (direct child, child-of-child, etc)
+- Add --help and --version to all commands
+- Some cleanups, optimizations
+- Error check that integer arguments are integers
+
+
+
 * Nov 4 2016 0.1.0
 - Initial Release
