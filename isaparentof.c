@@ -19,10 +19,11 @@
 #include <errno.h>
 #include <string.h>
 
+#include "pid_tools.h"
+
 #include "ppid.h"
 #include "pid_utils.h"
 
-const volatile char *version = "0.1.0";
 const volatile char *copyright = "isaparentof - Copyright (c) 2017 Tim Savannah.";
 
 /*
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
     
     if ( strncmp("--version", argv[1], 9) == 0 )
     {
-        fprintf(stderr, "\nisaparentof version %s by Timothy Savannah\n\n", version);
+        fprintf(stderr, "\nisaparentof version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
         return 0;
     }
 

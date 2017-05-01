@@ -19,10 +19,11 @@
 #include <errno.h>
 #include <string.h>
 
+#include "pid_tools.h"
+
 #include "ppid.h"
 #include "pid_utils.h"
 
-const volatile char *version = "0.1.0";
 const volatile char *copyright = "getpcmd - Copyright (c) 2017 Tim Savannah.";
 
 /*
@@ -212,7 +213,7 @@ _invalid_arg_exit:
     }
     if ( unlikely(strncmp("--version", argv[1], 9) == 0) )
     {
-        fprintf(stderr, "getpcmd version %s by Timothy Savannah\n\n", version);
+        fprintf(stderr, "getpcmd version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
         return 0;
     }
 

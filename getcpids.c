@@ -25,7 +25,6 @@
 
 #include "ppid.h"
 
-const volatile char *version = "0.1.0";
 const volatile char *copyright = "getcpids - Copyright (c) 2016, 2017 Tim Savannah.";
 
 static inline void usage()
@@ -195,7 +194,7 @@ int main(int argc, char* argv[])
     
     if ( strncmp("--version", argv[1], 9) == 0 )
     {
-        fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", version);
+        fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
         return 0;
     }
 
