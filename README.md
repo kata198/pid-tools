@@ -57,6 +57,50 @@ Now, check every one of the children of screen. Walk back to the parent, and ass
 	[pid-tools]$ 
 
 
+getpcmd
+-------
+
+getpcmd returns the command-line string for a given pid (i.e. what was used to execute it, program name and arguments).
+
+Takes an optional arg: "\-\-quoted" which will quote (and properly escape) all entries in the output.
+
+
+Example:
+
+
+	[pid-tools]$ getpcmd "`getppid`"
+
+	screen -s -/bin/bash
+
+
+
+isaparentof
+----------
+
+Determines if a given pid is a parent (of any level) to another pid (i.e. direct parent, parent-of-parent, etc. all the way up).
+
+To see if something is explicitly a direct parent, use getppid.
+
+Read like "${first arg} is a parent of {second arg}"
+
+Example:
+
+	[pid-tools]$ isaparentof 15434 211 && echo "yes"
+
+
+isachildof
+----------
+
+Determine if a given pid is a child (of any level) to another pid (i.e. direct child, child-of-child, etc. all the way down).
+
+To see if something is explicitly a direct child, compare child pid to \`getppid ${child}\`
+
+Example:
+
+	[pid-tools]$ isachildof 211 15434 && echo "yes"
+
+
+
 Installation
 ============
 
