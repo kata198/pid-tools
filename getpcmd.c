@@ -23,19 +23,21 @@
 #include "pid_utils.h"
 
 const volatile char *version = "0.1.0";
-const volatile char *copyright = "getpcmd - Copyright (c) 2016 Tim Savannah.";
+const volatile char *copyright = "getpcmd - Copyright (c) 2017 Tim Savannah.";
 
 /*
  * usage - print usage/help to stderr
  */
 static inline void usage()
 {
-    fputs("Usage: getpcmd [pid]\n", stderr);
+    fputs("Usage: getpcmd (Options) [pid]\n", stderr);
     fputs("  Prints the commandline string of a given pid\n", stderr);
+    fputs("\n  Options:\n\n     --quote              Quote the command arguments in output\n\n", stderr);
 }
 
+static void do_print_commandline(char *ptr, ssize_t size, int quoteArgs);
 
-static char *read_commandline(pid_t pid)
+static int read_commandline(pid_t pid, int quoteArgs)
 {
     char *path;
     int fd;
@@ -106,23 +108,17 @@ static char *read_commandline(pid_t pid)
             
     close(fd);
 
-
-	/* Replace all null (arg separater) with space */
-    register char *curPtr;
-
-    curPtr = ret;
-
-	while ( ( curPtr - ret ) < size )
+    /* Empty commandline str? */
+    if ( size == 0 )
     {
-        if ( unlikely( *curPtr == '\0' ) )
-		{
-			*curPtr = ' ';
-		}
-		curPtr++;
-	}
+        puts("\n");
+    }
+    else
+    {
+        do_print_commandline(ret, size, quoteArgs);
+    }
 
-
-    return ret;
+    return 1;
 
 cleanup_err:
 
@@ -131,10 +127,63 @@ cleanup_err:
     {
         free(ret);
     }
-    return NULL;
+    return 0;
 
 
 }
+
+
+static void do_print_commandline(char *ptr, ssize_t size, int quoteArgs)
+{
+    register char *curPtr;
+
+    curPtr = ptr;
+    if ( quoteArgs )
+    {
+        do
+        {
+            putchar('"');
+            while( *curPtr != '\0' )
+            {
+                if ( *curPtr == '"' )
+                    putchar('\\');
+                else if ( *curPtr == '\\' )
+                    putchar('\\');
+                putchar(*curPtr);
+                curPtr ++;
+            }
+            putchar('"');
+            curPtr ++;
+
+            if ( curPtr - ptr >= size )
+                break;
+            putchar(' ');
+
+        }  while ( 1 );
+    }
+    else
+    {
+        do
+        {
+            printf("%s", curPtr);
+            do
+            {
+                curPtr ++;
+            } while( *curPtr != '\0' );
+
+            curPtr ++;
+
+            if ( curPtr - ptr >= size )
+                break;
+            putchar(' ');
+
+        }  while ( 1 );
+    }
+
+
+    putchar('\n');
+}
+
 
 /**
 * main - takes one argument, the search pid.
@@ -144,33 +193,65 @@ int main(int argc, char* argv[])
 {
 
     pid_t pid;
+    int quoteArgs = 0;
+    char *pidStrPtr;
 
-    char *cmdlineStr;
 
-
-    if ( unlikely (argc != 2 ) )
-    { 
+    if ( unlikely (argc != 2 && argc != 3 ) )
+    {
+_invalid_arg_exit:
         fputs("Invalid number of arguments.\n\n", stderr);
         usage();
         return 1;
     }
 
+    if ( unlikely(strncmp("-h", argv[1], 2) == 0 || strncmp("--help", argv[1], 6) == 0) )
+    {
+        usage();
+        return 0;
+    }
+    if ( unlikely(strncmp("--version", argv[1], 9) == 0) )
+    {
+        fprintf(stderr, "getpcmd version %s by Timothy Savannah\n\n", version);
+        return 0;
+    }
 
-    pid = strtoint(argv[1]);
+
+    if ( unlikely(strncmp("--quote", argv[1], 7) == 0) )
+    {
+        if ( unlikely(argc == 2) )
+        {
+            goto _invalid_arg_exit;
+        }
+
+        quoteArgs = 1;
+        pidStrPtr = argv[2];
+    }
+    else
+    {
+        if( unlikely(argc > 2) )
+        {
+            fputs("Too many arguments or unknown option.\n\n", stderr);
+            usage();
+            return 1;
+        }
+        quoteArgs = 0;
+        pidStrPtr = argv[1];
+    }
+
+
+    pid = strtoint(pidStrPtr);
     if ( unlikely(pid <= 0 ) )
     {
-        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
+        fprintf(stderr, "Provided PID is not a valid integer: '%s'\n", pidStrPtr);
         return 1;
     }
 
-    cmdlineStr = read_commandline(pid);
-    if ( unlikely(cmdlineStr == NULL ) )
+    if ( unlikely( !read_commandline(pid, quoteArgs) ) )
     {
         return 1;
     }
 
-
-    printf("%s\n", cmdlineStr);
 
     return 0;
 
