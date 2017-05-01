@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Timothy Savannah All Rights Reserved
+ * Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
  *
  * Licensed under terms of Gnu General Public License Version 2
  *

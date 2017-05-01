@@ -54,6 +54,18 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    if ( strncmp("--help", argv[1], 6) == 0 )
+    {
+        usage();
+        return 0;
+    }
+    
+    if ( strncmp("--version", argv[1], 9) == 0 )
+    {
+        fprintf(stderr, "\nisachildof version %s by Timothy Savannah\n\n", version);
+        return 0;
+    }
+
     ppid = strtoint(argv[2]);
     if ( ppid <= 0 )
     {

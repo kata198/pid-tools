@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Timothy Savannah All Rights Reserved
+ * Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
  *
  * Licensed under terms of Gnu General Public License Version 2
  *
@@ -26,7 +26,7 @@
 #include "ppid.h"
 
 const volatile char *version = "0.1.0";
-const volatile char *copyright = "getcpids - Copyright (c) 2016 Tim Savannah.";
+const volatile char *copyright = "getcpids - Copyright (c) 2016, 2017 Tim Savannah.";
 
 static inline void usage()
 {
@@ -185,6 +185,18 @@ int main(int argc, char* argv[])
         fputs("Invalid number of arguments.\n\n", stderr);
         usage();
         return 1;
+    }
+
+    if ( strncmp("--help", argv[1], 6) == 0 )
+    {
+        usage();
+        return 0;
+    }
+    
+    if ( strncmp("--version", argv[1], 9) == 0 )
+    {
+        fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", version);
+        return 0;
     }
 
 
