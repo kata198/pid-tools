@@ -5,7 +5,8 @@
  *
  * See "LICENSE" with the source distribution for details.
  *
- * ppid.c - Function to get the parent pid of a given pid
+ * ppid.c - Function to get the parent pid of a given pid. This
+ *   is included statically by ppid.h unless SHARED_LIB is defined.
  */
 
 
