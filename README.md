@@ -100,6 +100,17 @@ Example:
 	[pid-tools]$ isachildof 211 15434 && echo "yes"
 
 
+waitpid
+-------
+
+Wait for a given pid to complete.
+
+Unlike the "wait" shell builtin, this allows you to wait on pids without the requirement that they be children of the current process.
+
+Example:
+
+	[pid-tools]$ waitpid `pidof somejob.sh` && ./nextjob.sh
+
 
 Installation
 ============
