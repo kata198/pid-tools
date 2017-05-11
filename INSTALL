@@ -1,0 +1,33 @@
+
+1. Compile the code. See the top of "Makefile" for a list of targets to pick one best suited for you.
+
+Some common targets:
+
+   all - Will use your provided CFLAGS / LDFLAGS or choose machine-independent optimized flags if none provided.
+   native - Will build optimized for the current system. Will likely only run on current processor or better
+   static - Will build static versions of executables ( no dynamic library links )
+   static-native - Will build static versions of executables optimized for current system.
+
+
+2. Install the executables
+
+For local installation:
+    
+    Use  `make install`
+
+      This will detect if /usr/bin is writeable by current user, and if so install there.
+      Otherwise, it will install in $HOME/bin
+
+For alternate path:
+
+    Use `make install PREFIX="/usr/local"`  to install to /usr/local/bin , for example.
+
+For package installation:
+
+  RPM: 
+
+    Use `make install DESTDIR="$RPM_BUILD_ROOT/usr"` for the RPM to contain executables in /usr/bin . Change "/usr" to alternate prefix if desired.
+
+  Archlinux (PKGBUILD):
+
+    Use `make install DESTDIR="${pkgdir}/usr"` for the pacman PKG to contain executables in /usr/bin. Change "/usr" to alternate prefix if desired.
