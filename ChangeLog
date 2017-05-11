@@ -1,5 +1,13 @@
 * May 11 2017 2.0.0
 - Add "waitpid" command, which waits for a given pid to terminate/complete
+- Fix where compilation wouldn't work by default on old compilers which
+defaulted to C89. Now, we detect if gnu99 is a viable target, if so, use that,
+otherwise use C99.
+- Fix issue (work around make bug?) where sometimes running "make" would
+recompile things that didn't need to be recompiled
+- Default with some flags which will trim and optimize a bit during link-time
+- Add a make target, "make static', which will generate completely static
+executables
 
 
 * Apr 30 2017 1.0.0
