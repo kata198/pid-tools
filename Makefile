@@ -26,7 +26,8 @@ ALL_FILES = bin/getppid \
 	bin/getcpids \
 	bin/isaparentof \
 	bin/isachildof \
-	bin/getpcmd
+	bin/getpcmd \
+	bin/waitpid
 
 
 all: ${DEPS} ${ALL_FILES}
@@ -83,6 +84,12 @@ getpcmd.o : getpcmd.c
 
 bin/getpcmd : getpcmd.o
 	gcc ${USE_CFLAGS} getpcmd.o -o bin/getpcmd
+
+waitpid.o : waitpid.c
+	gcc ${USE_CFLAGS} waitpid.c -c -o waitpid.o
+
+bin/waitpid: waitpid.o
+	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
 
 
 remake:
