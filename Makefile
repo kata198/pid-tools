@@ -181,10 +181,10 @@ bin/getcpids : ${DEPS} getcpids.o
 bin/getpcmd : ${DEPS} getpcmd.o
 	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpcmd.o -o bin/getpcmd
 
-waitpid.o : waitpid.c
+waitpid.o : ${DEPS} waitpid.c
 	gcc ${USE_CFLAGS} waitpid.c -c -o waitpid.o
 
-bin/waitpid: waitpid.o
+bin/waitpid: ${DEPS} waitpid.o
 	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
 
 
