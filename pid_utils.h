@@ -33,6 +33,7 @@ static pid_t strtoint(char *str)
     else
     {
         errno = 1; /* Simulate error */
+        return 0;
     }
 
     if ( errno != 0 || ( !ret && endptr == str) || ( *endptr != '\0' ) )
