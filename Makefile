@@ -9,8 +9,10 @@ CFLAGS ?= -O3 -flto -fuse-linker-plugin
 
 LDFLAGS ?= -flto -fuse-linker-plugin
 
+C_STANDARD=$(shell test -f .use_c_std && cat .use_c_std || (echo 'int main(int argc, char *argv[]) { return 0; }' > .uc.c; ${CC} -std=gnu99 .uc.c >/dev/null 2>&1 && (echo 'gnu99' > .use_c_std; echo 'gnu99'; rm -f .uc.c) || ( echo 'c99' > .use_c_std; echo 'c99'; rm -f .uc.c ) ))
+
 # Actual flags to use.
-USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe -std=c99 -s
+USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe -std=${C_STANDARD} -s
 
 USE_LDFLAGS = -Wl,-O1,--sort-common,--as-needed,-z,relro ${LDFLAGS}
 
