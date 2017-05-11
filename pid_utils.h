@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 static pid_t strtoint(char *str)
 {
