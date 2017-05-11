@@ -32,6 +32,6 @@
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-const volatile char *PID_TOOLS_VERSION = "1.0.0";
+const volatile char *PID_TOOLS_VERSION = "2.0.0";
 
 #endif

@@ -1,4 +1,4 @@
-* ??? ?? ???? 2.0.0
+* May 11 2017 2.0.0
 - Add "waitpid" command, which waits for a given pid to terminate/complete
 
 
