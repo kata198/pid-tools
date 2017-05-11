@@ -2,25 +2,28 @@
 # Uncomment following line to use fastest CFLAGS for gcc.
 #   program will only run on hardware that is equal or better to
 #   the current host.
-#CFLAGS ?= -O3 -march=native -mtune=native -flto -Bdirect
+#CFLAGS ?= -O3 -march=native -mtune=native -flto -fuse-linker-plugin
 
 # Default lame CFLAGS.
-CFLAGS ?= -O3
+CFLAGS ?= -O3 -flto -fuse-linker-plugin
 
+LDFLAGS ?= -flto -fuse-linker-plugin
 
 # Actual flags to use.
-USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe
+USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe -std=c99 -s
+
+USE_LDFLAGS = -Wl,-O1,--sort-common,--as-needed,-z,relro ${LDFLAGS}
 
 # Cause everything to recompile when CFLAGS changes, unless user is root (to support "sudo make install")
 WHOAMI=$(shell whoami)
-CFLAGS_HASH=$(shell echo "${USE_CFLAGS}" | md5sum | tr ' ' '\n' | head -n1)
+CFLAGS_HASH=$(shell echo "CFLAGS=${USE_CFLAGS} .. LDFLAGS=${USE_LDFLAGS}" | md5sum | tr ' ' '\n' | head -n1)
 CFLAGS_HASH_FILE=$(shell test "${WHOAMI}" != "root" && echo .cflags.${CFLAGS_HASH} || echo .cflags.*)
 
 PREFIX ?= $(shell test -w "/usr/bin" && echo "/usr" || echo "${HOME}")
 
 DESTDIR ?= ${PREFIX}
 
-DEPS = bin ${CFLAGS_HASH_FILE}
+DEPS = bin/.created ${CFLAGS_HASH_FILE}
 
 ALL_FILES = bin/getppid \
 	bin/getcpids \
@@ -48,41 +51,39 @@ ${CFLAGS_HASH_FILE}:
 	touch "${CFLAGS_HASH_FILE}"
 
 
-bin:
+bin/.created:
 	mkdir -p bin
+	touch bin/.created
 
-ppid.o : ppid.c
-	gcc ${USE_CFLAGS} -DSHARED_LIB ppid.c -c -o ppid.o
-
-getppid.o : getppid.c ppid.c
+getppid.o : ${DEPS} getppid.c ppid.c
 	gcc ${USE_CFLAGS} getppid.c -c -o getppid.o
 
-bin/getppid : ${DEPS}  getppid.o
-	gcc ${USE_CFLAGS} getppid.o -o bin/getppid
-
-getcpids.o : getcpids.c ppid.c
+getcpids.o : ${DEPS} getcpids.c ppid.c
 	gcc ${USE_CFLAGS} getcpids.c -c -o getcpids.o
 
-bin/getcpids : ${DEPS} getcpids.o
-	gcc ${USE_CFLAGS} getcpids.o -o bin/getcpids
-
-isaparentof.o : isaparentof.c ppid.c
+isaparentof.o : ${DEPS} isaparentof.c ppid.c
 	gcc ${USE_CFLAGS} isaparentof.c -c -o isaparentof.o
 
-bin/isaparentof : ${DEPS} isaparentof.o
-	gcc ${USE_CFLAGS} isaparentof.o -o bin/isaparentof
-
-isachildof.o : isachildof.c ppid.c
+isachildof.o : ${DEPS} isachildof.c ppid.c
 	gcc ${USE_CFLAGS} isachildof.c -c -o isachildof.o
 
-bin/isachildof : ${DEPS} isachildof.o
-	gcc ${USE_CFLAGS} isachildof.o -o bin/isachildof
-
-getpcmd.o : getpcmd.c
+getpcmd.o : ${DEPS} getpcmd.c
 	gcc ${USE_CFLAGS} getpcmd.c -c -o getpcmd.o
 
-bin/getpcmd : getpcmd.o
-	gcc ${USE_CFLAGS} getpcmd.o -o bin/getpcmd
+bin/isaparentof : ${DEPS} isaparentof.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} isaparentof.o -o bin/isaparentof
+
+bin/isachildof : ${DEPS} isachildof.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} isachildof.o -o bin/isachildof
+
+bin/getppid : ${DEPS}  getppid.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getppid.o -o bin/getppid
+
+bin/getcpids : ${DEPS} getcpids.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getcpids.o -o bin/getcpids
+
+bin/getpcmd : ${DEPS} getpcmd.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpcmd.o -o bin/getpcmd
 
 
 remake:
