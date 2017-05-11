@@ -54,6 +54,11 @@ ${CFLAGS_HASH_FILE}:
 	touch "${CFLAGS_HASH_FILE}"
 
 
+static:
+	make clean;
+	CFLAGS="${CFLAGS} -static" make
+
+
 bin/.created:
 	mkdir -p bin
 	touch bin/.created
