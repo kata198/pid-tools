@@ -25,7 +25,7 @@ PREFIX ?= $(shell test -w "/usr/bin" && echo "/usr" || echo "${HOME}")
 
 DESTDIR ?= ${PREFIX}
 
-DEPS = bin/.created ${CFLAGS_HASH_FILE}
+DEPS = bin/.created ${CFLAGS_HASH_FILE} pid_tools.h pid_utils.h
 
 ALL_FILES = bin/getppid \
 	bin/getcpids \
