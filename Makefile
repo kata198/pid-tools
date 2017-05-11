@@ -4,17 +4,20 @@
 #   the current host.
 #CFLAGS ?= -O3 -march=native -mtune=native -flto -fuse-linker-plugin
 
-# Default lame CFLAGS.
-CFLAGS ?= -O3 -flto -fuse-linker-plugin
+# Default CFLAGS
+CFLAGS ?= -O3 -flto -fuse-linker-plugin -s
 
-LDFLAGS ?= -flto -fuse-linker-plugin
+LDFLAGS ?= -flto -fuse-linker-plugin -Wl,-O1,--sort-common,--as-needed,-z,relro
+
+DEBUG_CFLAGS = -Og -ggdb3
+DEBUG_LDFLAGS = -Wl,-Og -ggdb3
 
 C_STANDARD=$(shell test -f .use_c_std && cat .use_c_std || (echo 'int main(int argc, char *argv[]) { return 0; }' > .uc.c; ${CC} -std=gnu99 .uc.c >/dev/null 2>&1 && (echo 'gnu99' > .use_c_std; echo 'gnu99'; rm -f .uc.c) || ( echo 'c99' > .use_c_std; echo 'c99'; rm -f .uc.c ) ))
 
 # Actual flags to use.
-USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe -std=${C_STANDARD} -s
+USE_CFLAGS = ${CFLAGS} -Wall -Wno-unused-function -pipe -std=${C_STANDARD}
 
-USE_LDFLAGS = -Wl,-O1,--sort-common,--as-needed,-z,relro ${LDFLAGS}
+USE_LDFLAGS = ${LDFLAGS}
 
 # Cause everything to recompile when CFLAGS changes, unless user is root (to support "sudo make install")
 WHOAMI=$(shell whoami)
@@ -55,8 +58,10 @@ ${CFLAGS_HASH_FILE}:
 
 
 static:
-	make clean;
 	CFLAGS="${CFLAGS} -static" make
+
+debug:
+	CFLAGS="${DEBUG_CFLAGS}" LDFLAGS="${DEBUG_LDFLAGS}" make
 
 
 bin/.created:
