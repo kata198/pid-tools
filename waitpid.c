@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <features.h>
+#define __USE_XOPEN_EXTENDED
 #include <unistd.h>
 #include <string.h>
 
