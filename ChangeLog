@@ -1,3 +1,10 @@
+* May 11 2017 2.0.1
+- Update Makefile to ease development and custom flags
+- Add some additional Makefile targets, which are listed in comments at top of
+Makefile
+- Add INSTALL file which describes how to compile and install/package
+- Work around a WRONG gcc warning (and remove need for -Wno-unused-function)
+
 * May 11 2017 2.0.0
 - Add "waitpid" command, which waits for a given pid to terminate/complete
 - Fix where compilation wouldn't work by default on old compilers which

@@ -1,3 +1,7 @@
+/*
+ * pid_tools - Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
+ *   Licensed under terms of GNU General Purpose License (GPL) version 2
+ */
 #ifndef _PID_TOOLS_PPID_H
 #define _PID_TOOLS_PPID_H
 

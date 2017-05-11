@@ -1,3 +1,7 @@
+/*
+ * pid_tools - Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
+ *   Licensed under terms of GNU General Purpose License (GPL) version 2
+ */
 #ifndef _PID_TOOLS_H
 #define _PID_TOOLS_H
 
@@ -32,6 +36,7 @@
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-const volatile char *PID_TOOLS_VERSION = "2.0.0";
+const volatile char *PID_TOOLS_VERSION = "2.0.1";
+const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2017 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
 
 #endif
