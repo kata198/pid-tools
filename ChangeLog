@@ -1,3 +1,7 @@
+* ??? ?? ???? 2.0.0
+- Add "waitpid" command, which waits for a given pid to terminate/complete
+
+
 * Apr 30 2017 1.0.0
 - Add getpcmd to get the commandline string (optionally quoted) of a given pid
 - Add isparentof to determine if a pid is the parent of another pid, at any
