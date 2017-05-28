@@ -26,7 +26,7 @@ static pid_t strtoint(char *str)
 
     errno = 0;
 
-    if ( *str )
+    if ( likely( *str ) )
     {
         ret = strtol(str, &endptr, 10);
     }
@@ -36,8 +36,9 @@ static pid_t strtoint(char *str)
         return 0;
     }
 
-    if ( errno != 0 || ( !ret && endptr == str) || ( *endptr != '\0' ) )
+    if ( unlikely( errno != 0 || ( !ret && endptr == str) || ( *endptr != '\0' ) ) )
     {
+        errno = 1;
         return 0;
     }
 
