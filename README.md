@@ -73,6 +73,16 @@ Example:
 	screen -s -/bin/bash
 
 
+getpenv
+-------
+
+getpenv fetches the value of an environment variable from an arbitrary pid.
+
+Example:
+
+	[pid-tools]$ getpenv 12345 PATH
+	/home/blah/bin:/sbin:/usr/bin:/usr/local/bin:/opt/citrix/bin
+
 
 isaparentof
 ----------
