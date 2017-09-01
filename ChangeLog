@@ -1,3 +1,10 @@
+
+* ??? ?? ???? 3.0.0
+
+- Add `getpenv` application, which reads an environment variable from
+arbitrary process
+
+
 * May 11 2017 2.0.1
 - Update Makefile to ease development and custom flags
 - Add some additional Makefile targets, which are listed in comments at top of
