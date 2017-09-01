@@ -36,7 +36,7 @@
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-const volatile char *PID_TOOLS_VERSION = "2.0.1";
+const volatile char *PID_TOOLS_VERSION = "3.0.0";
 const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2017 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
 
 #endif
