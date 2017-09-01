@@ -41,10 +41,10 @@ DEBUG_CFLAGS = -Og -ggdb3
 DEBUG_LDFLAGS = -Wl,-Og -ggdb3
 
 # Native CFLAGS
-NATIVE_CFLAGS = -O3 -flto -fuse-linker-plugin -march=native -mtune=native
+NATIVE_CFLAGS = -O3 -flto -fuse-linker-plugin -march=native -mtune=native -s
 
 # Native LDFLAGS
-NATIVE_LDFLAGS = -flto -fuse-linker-plugin -Wl,-O1,--sort-common,--as-needed,-z,relro
+NATIVE_LDFLAGS = -flto -fuse-linker-plugin -Wl,-O1,--sort-common,--as-needed,-z,relro -s
 
 # CFLAG to trigger static build
 STATIC_CFLAG = -static
@@ -90,7 +90,8 @@ ALL_FILES = bin/getppid \
 	bin/isaparentof \
 	bin/isachildof \
 	bin/getpcmd \
-	bin/waitpid
+	bin/waitpid \
+	bin/getpenv
 
 
 # TARGET all - Default target
@@ -176,6 +177,13 @@ isachildof.o : ${DEPS} isachildof.c ppid.c
 getpcmd.o : ${DEPS} getpcmd.c
 	gcc ${USE_CFLAGS} getpcmd.c -c -o getpcmd.o
 
+waitpid.o : ${DEPS} waitpid.c
+	gcc ${USE_CFLAGS} waitpid.c -c -o waitpid.o
+
+getpenv.o : ${DEPS} getpenv.c
+	gcc ${USE_CFLAGS} getpenv.c -c -o getpenv.o
+
+
 ########
 #  EXECUTABLES
 ##################
@@ -195,8 +203,9 @@ bin/getcpids : ${DEPS} getcpids.o
 bin/getpcmd : ${DEPS} getpcmd.o
 	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpcmd.o -o bin/getpcmd
 
-waitpid.o : ${DEPS} waitpid.c
-	gcc ${USE_CFLAGS} waitpid.c -c -o waitpid.o
+bin/getpenv : ${DEPS} getpenv.o
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpenv.o -o bin/getpenv
+	
 
 bin/waitpid: ${DEPS} waitpid.o
 	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
