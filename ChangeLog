@@ -1,5 +1,5 @@
 
-* ??? ?? ???? 3.0.0
+* Sep 1 2017 3.0.0
 
 - Add `getpenv` application, which reads an environment variable from
 arbitrary process
