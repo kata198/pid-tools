@@ -2,3 +2,9 @@
 *~
 .cflags*
 bin/
+*.gcda
+.last*
+.use*
+*.orig
+*.rej
+*.tar.*
