@@ -1,3 +1,15 @@
+* Nov 22 2017 3.1.0
+
+- Fix all memory leaks
+
+- Better handle memory in several circumstances
+
+- Reduce memory footprint slightly
+
+- Add some more comments and improve names of a few variables/functions
+
+- Report an error for getppid when a non-existant pid is provided or another error occurs (like process closes during execution before we obtain the ppid) instead of printing "0" as the pid
+
 
 * Sep 1 2017 3.0.0
 
