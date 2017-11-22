@@ -33,17 +33,34 @@ static inline void usage()
     fputs("  Prints the child process ids (pids) belonging to a given pid.\n", stderr);
 }
 
-/* 32 bytes on 64-bit system */
+#ifdef __GNUC__
+  #define ALIGN_4  __attribute__ ((aligned(4)))
+  #define ALIGN_8  __attribute__ ((aligned(8)))
+  #define ALIGN_16  __attribute__ ((aligned(16)))
+  #define ALIGN_24  __attribute__ ((aligned(24)))
+  #define ALIGN_32 __attribute__ ((aligned(32)))
+#else
+  #define ALIGN_4
+  #define ALIGN_8
+  #define ALIGN_16
+  #define ALIGN_24
+  #define ALIGN_32
+#endif
+
+#define NUM_PIDS_IN_COMPOUND_PIDS 6
+
+/* 32 bytes on 64-bit system (8-byte void pointer).
+*/
 typedef struct {
-    pid_t pid1;
-    pid_t pid2;
+    pid_t pids[NUM_PIDS_IN_COMPOUND_PIDS] ALIGN_4;
+    /*pid_t pid2;
     pid_t pid3;
     pid_t pid4;
     pid_t pid5;
     pid_t pid6;
-
+*/
     void *next;
-}compound_pids;
+}compound_pids ALIGN_32;
 
 /* CP_NEXT - Returns the "next" compound_pids, cast correctly */
 #define CP_NEXT(cp) ((compound_pids *)cp->next)
@@ -89,16 +106,22 @@ static compound_pids* cp_extend(compound_pids *toExtend)
  */
 static inline compound_pids* cp_add(compound_pids *cp, unsigned int *offset, pid_t pid)
 {
-    if ( *offset == 6 )
+    if ( *offset == NUM_PIDS_IN_COMPOUND_PIDS )
     {
+        /* If we have exceeded the number of pids in this struct,
+         *   we have to extend.
+         *
+         *  To extend, we allocate another compound_pids struct and point the current "next"
+         *    pointer to this new structure.
+         */
         cp = cp_extend(cp);
 
         *offset = 0;
     }
 
-    pid_t *toSet = ((pid_t *)cp) + *(offset);
+    /* Calculate the offset to the pid# we are trying to set */
+    cp->pids[*offset] = pid;
 
-    *toSet = pid;
     *offset += 1;
 
     return cp;
@@ -129,7 +152,7 @@ static inline compound_pids* cp_add(compound_pids *cp, unsigned int *offset, pid
  */
 static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
 {
-    pid_t *ret, *curPid, *retPtr;
+    pid_t *ret, *retPtr;
     compound_pids *cur;
     unsigned int i;
 
@@ -139,10 +162,9 @@ static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
     cur = cp;
 
     do {
-        curPid = &cur->pid1;
-        for(i=0, curPid = &cur->pid1; i < 6; i++, curPid += 1, retPtr += 1)
+        for(i=0; i < NUM_PIDS_IN_COMPOUND_PIDS; i++, retPtr += 1)
         {
-            *retPtr = *(curPid);
+            *retPtr = cur->pids[i];
             if ( *retPtr == 0 )
                 goto after_loop;
         }
@@ -230,7 +252,7 @@ int main(int argc, char* argv[])
     closedir(procDir);
 
     /* No children. */
-    if ( cpList->pid1 == 0 )
+    if ( cpList->pids[0] == 0 )
         goto cleanup_and_exit;
 
 
