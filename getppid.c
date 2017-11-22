@@ -70,11 +70,16 @@ int main(int argc, char* argv[])
     pid = strtoint(argv[1]);
     if ( pid <= 0 )
     {
-        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
+        fprintf(stderr, "Invalid pid (must be integer > 0): %s\n", argv[1]);
         return 1;
     }
 
     ppid = getPpid(pid);
+    if ( ppid == 0 )
+    {
+        fprintf(stderr, "Invalid pid or could not obtain information on: %s\n", argv[1]);
+        return 1;
+    }
 
     printf("%u\n", ppid);
 

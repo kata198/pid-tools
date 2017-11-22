@@ -227,9 +227,11 @@ int main(int argc, char* argv[])
                 numItems++;
             }
     }
+    closedir(procDir);
+
     /* No children. */
     if ( cpList->pid1 == 0 )
-        return 0;
+        goto cleanup_and_exit;
 
 
     printList = cp_to_list(cpList, numItems);
@@ -245,8 +247,11 @@ int main(int argc, char* argv[])
         putchar(' ');
     }
     putchar('\n');
+    free(printList);
+
+cleanup_and_exit:
+
+    free(cpList);
 
     return 0;
-
-
 }

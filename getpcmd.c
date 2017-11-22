@@ -36,29 +36,35 @@ static inline void usage()
     fputs("\n  Options:\n\n     --quote              Quote the command arguments in output\n\n", stderr);
 }
 
+/**
+ * do_print_commandline - Print the value of the proc cmdline contents, optionally quoting each argument.
+ */
 static void do_print_commandline(char *ptr, ssize_t size, int quoteArgs);
 
-static int read_commandline(pid_t pid, int quoteArgs)
+/**
+ *   read_and_print_proc_cmdline - Read the "cmdline" property of a given pid, 
+ *                        and either print it or an error message.
+ *
+ *       Returns 1 on success, 0 on error
+*/
+static int read_and_print_proc_cmdline(pid_t pid, int quoteArgs)
 {
-    char *path;
+    static char path[64] = { '/', 'p', 'r', 'o', 'c', '/' };
     int fd;
     char *ret = NULL;
     ssize_t size, bytesRead;
 
     long int curBuffSize = 4096 << 1;
 
-    path = malloc(128);
-
-    sprintf(path, "/proc/%d/cmdline", pid);
+    sprintf(&path[6], "%d/cmdline", pid);
 
     errno = 0;
 
     fd = open(path, O_RDONLY);
-    free(path);
 
     if( unlikely(fd == -1 || errno) )
     {
-        goto cleanup_err;
+        goto cleanup_err_exit;
     }
 
     /* fseek doesn't seem to work on proc to get file size.. */
@@ -119,21 +125,29 @@ static int read_commandline(pid_t pid, int quoteArgs)
         do_print_commandline(ret, size, quoteArgs);
     }
 
+    free(ret);
+
+
     return 1;
 
+/* cleanup_err - Free "ret", print error message and exit=0 */
 cleanup_err:
 
+    free(ret);
+
+/* cleanup_err_exit - Just print error message and exit=0 (go directly here if ret not allocated) */
+cleanup_err_exit:
+
     fprintf(stderr, "Error, pid %d does not exist or is not accessable.\n", pid);
-    if ( ret != NULL )
-    {
-        free(ret);
-    }
     return 0;
 
 
 }
 
 
+/**
+ * do_print_commandline - Print the value of the proc cmdline contents, optionally quoting each argument.
+ */
 static void do_print_commandline(char *ptr, ssize_t size, int quoteArgs)
 {
     register char *curPtr;
@@ -198,6 +212,7 @@ int main(int argc, char* argv[])
     char *pidStrPtr;
 
 
+    /* PARSE ARGS */
     if ( unlikely (argc != 2 && argc != 3 ) )
     {
 _invalid_arg_exit:
@@ -241,6 +256,7 @@ _invalid_arg_exit:
     }
 
 
+    /* Convert and validate provided "pid" argument */
     pid = strtoint(pidStrPtr);
     if ( unlikely(pid <= 0 ) )
     {
@@ -248,7 +264,10 @@ _invalid_arg_exit:
         return 1;
     }
 
-    if ( unlikely( !read_commandline(pid, quoteArgs) ) )
+    /* Read and print the contents of the proc cmdline for this pid,
+     *   and exit with error(1) or success (0)
+     */
+    if ( unlikely( !read_and_print_proc_cmdline(pid, quoteArgs) ) )
     {
         return 1;
     }

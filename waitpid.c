@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 {
 
     pid_t pid;
-    char procPath[256];
+    static char procPath[64] = { '/', 'p', 'r', 'o', 'c', '/' };
 
 
     if ( argc != 2 ) {
@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    sprintf(procPath, "/proc/%d", pid);
+    sprintf(&procPath[6], "%d", pid);
     if ( access( procPath, F_OK ) != 0 )
     {
         /* Pid does not exist... */

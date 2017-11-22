@@ -78,7 +78,7 @@ static int isMatch(const char *possibleMatch, const char *checkAgainst)
 
 #define READ_DATA_INCR_BUFSIZ 65535
 
-size_t readData(char **buf, FILE *envFile)
+static size_t readData(char **buf, FILE *envFile)
 {
     size_t curSize = READ_DATA_INCR_BUFSIZ;
     size_t bytesRead;
@@ -176,6 +176,8 @@ int main(int argc, char* argv[])
     char *envName, *envVal;
 
     int ret;
+
+    ret = 0;
 
     for( i=1; i < argc; i++)
     {
