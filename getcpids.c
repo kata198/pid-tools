@@ -73,8 +73,24 @@ static inline compound_pids* cp_init(void)
     compound_pids *ret;
 
     ret = (compound_pids *) calloc(sizeof(compound_pids), 1);
+
     return ret;
 }
+
+/* cp_destroy -
+ *   Unallocate a compound_pids object and all associated objects linked via "next"
+ */
+static void cp_destroy(compound_pids *cp)
+{
+    /* Recurse all the way to the last, and start freeing in reverse */
+    if ( cp->next != NULL )
+    {
+        cp_destroy( (compound_pids*) cp->next );
+    }
+
+    free(cp);
+}
+
 
 /*
  * cp_extend - Extends a compound_pids struct by filling in "next".
@@ -273,7 +289,7 @@ int main(int argc, char* argv[])
 
 cleanup_and_exit:
 
-    free(cpList);
+    cp_destroy(cpList);
 
     return 0;
 }
