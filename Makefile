@@ -20,7 +20,7 @@
 #
 #   remake - Cleans and recompiles
 #
-#   install - Installs executables into $DESTDIR/bin , or $PREFIX/bin if DESTDIR is not defined ,
+#   install - Installs executables into $DESTDIR/$PREFIX/bin , or $PREFIX/bin if DESTDIR is not defined ,
 #      if neither are defined, detects if /usr/bin is writeable and if so installs there,
 #      otherwise installs to $HOME/bin
 
@@ -71,12 +71,15 @@ LAST_CFLAGS=$(shell cat .last_cflags)
 LAST_LDFLAGS=$(shell cat .last_ldflags)
 
 
-# Guess prefix based on if /usr/bin is writeable, otherwise use $HOME
-PREFIX ?= $(shell test -w "/usr/bin" && echo "/usr" || echo "${HOME}")
 
 # DESTDIR - actual destination used, same as prefix. Standard param
 #   when make instaling to a package dir (like PKGBUILD, or RPM spec)
-DESTDIR ?= ${PREFIX}
+DESTDIR ?= /
+
+# Guess prefix based on if /usr/bin is writeable, otherwise use $HOME
+PREFIX ?= $(shell test -w "${DESTDIR}" && echo "/usr" || echo "${HOME}")
+
+INSTALLDIR = "${DESTDIR}/${PREFIX}"
 
 # DEPS common for all units
 #   * will recompile if CFLAGS changes,
@@ -113,12 +116,12 @@ distclean:
 
 # TARGET install - Install stuff to destdir
 install:
-	[ -f ".last_cflags" -a -z "${USER_CFLAGS}" ] && (export CFLAGS="${LAST_CFLAGS}" && export LDFLAGS="${LAST_LDFLAGS}" && make _install DESTDIR=${DESTDIR}) || make all _install
+	[ -f ".last_cflags" -a -z "${USER_CFLAGS}" ] && (export CFLAGS="${LAST_CFLAGS}" && export LDFLAGS="${LAST_LDFLAGS}" && make _install DESTDIR="${DESTDIR}" PREFIX="${PREFIX}") || make all _install DESTDIR="${DESTDIR}" PREFIX="${PREFIX}"
 
 
 _install: ${ALL_FILES}
-	mkdir -p "${DESTDIR}/bin"
-	install -m 775 ${ALL_FILES} "${DESTDIR}/bin"
+	mkdir -p "${INSTALLDIR}/bin"
+	install -m 775 ${ALL_FILES} "${INSTALLDIR}/bin"
 
 
 # When hash of CFLAGS changes, this unit causes all compiles to become invalidated
