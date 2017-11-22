@@ -63,6 +63,8 @@ ALWAYS_INLINE_EXE_ONLY pid_t getPpid(pid_t pid)
     if ( read(fd, buff, 127) <= 0 ) {
         /* Failed to read from "stat" */
         fprintf(stderr, "Error trying to read from '%s' [%d]: %s\n", buff, errno, strerror(errno));
+        close(fd);
+        return 0;
     }
 
     close(fd);
@@ -82,9 +84,11 @@ ALWAYS_INLINE_EXE_ONLY pid_t getPpid(pid_t pid)
     }
 
     ret = atoi(buff);
+
     /* No parent means init is parent */
     if(ret == 0)
         ret = 1;
+
     return ret;
 
 }
