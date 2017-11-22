@@ -1,3 +1,9 @@
+* Nov 22 2017 3.1.1
+
+- Fixup Makefile to pass along PREFIX correctly for "make install", and update
+install-into-home logic
+
+
 * Nov 22 2017 3.1.0
 
 - Fix all memory leaks
