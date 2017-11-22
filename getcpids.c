@@ -172,6 +172,10 @@ static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
     compound_pids *cur;
     unsigned int i;
 
+    /* ret will normally get null terminated by assigning to a 0 cur->pids[i]
+     *   In the case that all cur->pids have assigned pids but there is no next,
+     *     we must explicitly zero the end
+     */
     ret = malloc(sizeof(pid_t) * (numEntries + 1));
     retPtr = ret;
     
@@ -187,7 +191,12 @@ static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
 
         cur = CP_NEXT(cur);
     }while( !!(cur) );
-    
+
+    /* Handle the case where all pids were assigned in the last compound_pids struct,
+     *   so we didn't assign the last *retPtr to 0
+     */
+    *retPtr = 0;
+
 after_loop:
 
     return ret;
