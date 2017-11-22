@@ -10,6 +10,12 @@
 
 - Report an error for getppid when a non-existant pid is provided or another error occurs (like process closes during execution before we obtain the ppid) instead of printing "0" as the pid
 
+- If cannot read the 'stat' file (certain configurations may block this for processes owned by another user), add missing return 0 (error return)
+
+- Rewrite getcpids.c to ensure proper alignment, and optimize/simplify some things
+
+- Fix rare condition in getcpids where under certain circumstances an extra bogus pid could be printed (not sure if this was possible before, the rewrite may have exposed it)
+
 
 * Sep 1 2017 3.0.0
 
