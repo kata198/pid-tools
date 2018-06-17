@@ -1,3 +1,4 @@
+# vim: set noexpandtab ts=4 sw=4 st=4 :
 
 # Targets:
 #
@@ -100,9 +101,10 @@ ALL_FILES = bin/getppid \
 
 
 # TARGET all - Default target
-all: ${DEPS} ${ALL_FILES}
-	@ echo ${_X} >/dev/null 2>&1
+all: ${DEPS} ${ALL_FILES} .dummy
+#	@ echo ${_X} >/dev/null 2>&1
 #	@ /bin/true
+
 
 # TARGET clean - Clean target
 clean:
@@ -111,6 +113,7 @@ clean:
 	rm -f .cflags.*
 	rm -f .last_cflags
 	rm -f .last_ldflags
+	rm -f .dummy
 
 # TARGET distclean - Clean target
 distclean:
@@ -121,7 +124,7 @@ install:
 	[ -f ".last_cflags" -a -z "${USER_CFLAGS}" ] && (export CFLAGS="${LAST_CFLAGS}" && export LDFLAGS="${LAST_LDFLAGS}" && make _install DESTDIR="${DESTDIR}" PREFIX="${PREFIX}") || make all _install DESTDIR="${DESTDIR}" PREFIX="${PREFIX}"
 
 
-_install: ${ALL_FILES}
+_install: ${ALL_FILES} .dummy
 	mkdir -p "${INSTALLDIR}/bin"
 	install -m 775 ${ALL_FILES} "${INSTALLDIR}/bin"
 
@@ -163,6 +166,12 @@ bin/.created:
 	mkdir -p bin
 	touch bin/.created
 
+# .dummy - a special target to reference _X which ensures that changing flags triggers rebuild
+.dummy: ${DEPS} ${ALL_FILES}
+	@ echo ${_X} >/dev/null 2>&1
+	@ touch .dummy
+
+
 ########
 #  OBJECTS
 ##############
@@ -187,7 +196,6 @@ waitpid.o : ${DEPS} waitpid.c
 
 getpenv.o : ${DEPS} getpenv.c
 	gcc ${USE_CFLAGS} getpenv.c -c -o getpenv.o
-
 
 ########
 #  EXECUTABLES
@@ -215,4 +223,4 @@ bin/getpenv : ${DEPS} getpenv.o
 bin/waitpid: ${DEPS} waitpid.o
 	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
 
-
+# vim: set noexpandtab ts=4 sw=4 st=4 :
