@@ -87,6 +87,8 @@ INSTALLDIR = "${DESTDIR}/${PREFIX}"
 #   * Will recompile if headers change
 DEPS = bin/.created ${CFLAGS_HASH_FILE} pid_tools.h pid_utils.h
 
+INODE_UTILS_DEPS = pid_inode_utils.h
+
 # All output executables
 ALL_FILES = bin/getppid \
 	bin/getcpids \
