@@ -13,6 +13,7 @@
   #define likely(x)    __builtin_expect(!!(x),1)
   #define unlikely(x)  __builtin_expect(!!(x),0)
   #define __hot __attribute__((hot))
+  #define MAYBE_UNUSED __attribute__((unused))
 
 #else
 
@@ -20,7 +21,8 @@
   #define likely(x)   (x)
   #define unlikely(x) (x)
   #define __hot
-
+  #define MAYBE_UNUSED
+  
 #endif
 
 #ifndef SHARED_LIB
