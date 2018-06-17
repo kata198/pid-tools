@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
+ * Copyright (c) 2016, 2017, 2018 Timothy Savannah All Rights Reserved
  *
  * Licensed under terms of Gnu General Public License Version 2
  *
@@ -25,12 +25,12 @@
 
 #include "ppid.h"
 
-const volatile char *copyright = "getcpids - Copyright (c) 2016, 2017 Tim Savannah.";
+const volatile char *copyright = "getcpids - Copyright (c) 2016, 2017, 2018 Tim Savannah.";
 
 static inline void usage()
 {
-    fputs("Usage: getcpids [pid]\n", stderr);
-    fputs("  Prints the child process ids (pids) belonging to a given pid.\n", stderr);
+    fputs("Usage: getcpids [pid] (Optional: [pid2] [pid..N])\n", stderr);
+    fputs("  Prints the child process ids (pids) belonging to a given pid or pids.\n", stderr);
 }
 
 #ifdef __GNUC__
@@ -208,7 +208,6 @@ after_loop:
  *    all accessable pids on the system, and print 
  *    a space-separated list of child pids (of next level)
  *
- *    TODO: Check for --help
  */
 int main(int argc, char* argv[])
 {
@@ -218,6 +217,7 @@ int main(int argc, char* argv[])
     unsigned int cpOffset;
     DIR *procDir;
     struct dirent *dirInfo;
+    pid_t *providedPids = NULL;
     pid_t providedPid;
     pid_t nextPid;
     char* nextPidStr;
@@ -225,32 +225,51 @@ int main(int argc, char* argv[])
 
     pid_t *printList;
     unsigned int numItems;
+    unsigned int i;
+    unsigned int numArgs;
 
+    int returnCode = 0;
 
-    if ( argc != 2 ) {
+    if ( argc < 2 ) {
         fputs("Invalid number of arguments.\n\n", stderr);
         usage();
         return 1;
     }
 
-    if ( strncmp("--help", argv[1], 6) == 0 )
-    {
-        usage();
-        return 0;
-    }
-    
-    if ( strncmp("--version", argv[1], 9) == 0 )
-    {
-        fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
-        return 0;
-    }
 
+    numArgs = argc - 1;
 
-    providedPid = strtoint(argv[1]);
-    if ( providedPid <= 0 )
+    cpList = NULL;
+    providedPids = malloc( sizeof(pid_t) * numArgs );
+
+    for( i=1; i <= numArgs; i++ )
     {
-        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
-        return 1;
+
+        providedPid = strtoint(argv[i]);
+        if ( providedPid <= 0 )
+        {
+            /* If we failed to convert, maybe it is an option */
+            if ( strncmp("--help", argv[i], 6) == 0 )
+            {
+                usage();
+                returnCode = 0;
+                goto __cleanup_and_exit;
+            }
+            
+            if ( strncmp("--version", argv[i], 9) == 0 )
+            {
+                fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
+                returnCode = 0;
+                goto __cleanup_and_exit;
+            }
+
+            /* Nope -- fail out. */
+            fprintf(stderr, "Invalid pid: %s\n", argv[i]);
+            returnCode = 1;
+            goto __cleanup_and_exit;
+        }
+
+        providedPids[i - 1] = providedPid;
     }
 
     cpList = cp_init();
@@ -268,17 +287,22 @@ int main(int argc, char* argv[])
 
             nextPid = atoi(nextPidStr);
             ppid = getPpid(nextPid);
-            if(ppid == providedPid)
+            for( i=0; i < numArgs; i++ )
             {
-                curCp = cp_add(curCp, &cpOffset, nextPid);
-                numItems++;
+                providedPid = providedPids[i];
+                if(ppid == providedPid)
+                {
+                    curCp = cp_add(curCp, &cpOffset, nextPid);
+                    numItems++;
+                    break;
+                }
             }
     }
     closedir(procDir);
 
     /* No children. */
     if ( cpList->pids[0] == 0 )
-        goto cleanup_and_exit;
+        goto __cleanup_and_exit;
 
 
     printList = cp_to_list(cpList, numItems);
@@ -296,9 +320,13 @@ int main(int argc, char* argv[])
     putchar('\n');
     free(printList);
 
-cleanup_and_exit:
+__cleanup_and_exit:
 
-    cp_destroy(cpList);
+    if ( cpList != NULL )
+        cp_destroy(cpList);
 
-    return 0;
+    if ( providedPids != NULL )
+        free(providedPids);
+
+    return returnCode;
 }
