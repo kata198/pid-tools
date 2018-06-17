@@ -5,8 +5,12 @@
  *
  * See "LICENSE" with the source distribution for details.
  *
- * isachildof.c - Checks if a given process is in any way connected as a child.
- *   This could be a direct child, a child-of-child, etc all the way up.
+ * pid_utils.h - some general-purpose static utility functions
+ *         shared by several executables
+ *
+ *         These are contained in this header versus a .c file to allow
+ *         optimizations which wouldn't otherwise get applied if not single unit 
+ *         (e.x. inlining).
  *
  *   This is literally a copy of isaparentof except the args are switched.
  *   But a whole new file allows different help, etc
@@ -14,6 +18,8 @@
 
 #ifndef _PPID_UTILS_H
 #define _PPID_UTILS_H
+
+#include "pid_tools.h"
 
 #include <errno.h>
 #include <stdlib.h>
