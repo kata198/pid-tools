@@ -4,6 +4,8 @@
 
 - Allow 'waitpid' application to accept multiple pids and wait for all to complete
 
+- Allow 'getcpids' application to accept multiple pids and print the children of all arguments
+
 * Nov 22 2017 3.1.1
 
 - Fixup Makefile to pass along PREFIX correctly for "make install", and update
