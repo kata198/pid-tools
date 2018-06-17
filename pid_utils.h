@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 
-static pid_t strtoint(char *str)
+static pid_t strtoint(const char *str)
 {
     pid_t ret;
     char *endptr = { 0 };
