@@ -1,3 +1,9 @@
+* Jun ** 2018 4.0.0
+
+- Some cleanups / code improvements
+
+- Allow 'waitpid' application to accept multiple pids and wait for all to complete
+
 * Nov 22 2017 3.1.1
 
 - Fixup Makefile to pass along PREFIX correctly for "make install", and update
