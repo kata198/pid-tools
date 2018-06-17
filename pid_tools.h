@@ -15,6 +15,13 @@
   #define __hot __attribute__((hot))
   #define MAYBE_UNUSED __attribute__((unused))
 
+  #define ALIGN_4  __attribute__ ((aligned(4)))
+  #define ALIGN_8  __attribute__ ((aligned(8)))
+  #define ALIGN_16  __attribute__ ((aligned(16)))
+  #define ALIGN_32 __attribute__ ((aligned(32)))
+
+  #define builtin_ceil(x) (__builtin_ceil((x)))
+
 #else
 
   #define ALWAYS_INLINE
@@ -23,6 +30,13 @@
   #define __hot
   #define MAYBE_UNUSED
   
+  #define ALIGN_4
+  #define ALIGN_8
+  #define ALIGN_16
+  #define ALIGN_32
+
+  #define builtin_ceil(x) ( ((float)(x)) - ((int(x))) < 1e-6 ? ( int((x)) ) : (int((float)(x)) + 1) )
+
 #endif
 
 #ifndef SHARED_LIB

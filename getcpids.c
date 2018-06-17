@@ -33,19 +33,6 @@ static inline void usage()
     fputs("  Prints the child process ids (pids) belonging to a given pid or pids.\n", stderr);
 }
 
-#ifdef __GNUC__
-  #define ALIGN_4  __attribute__ ((aligned(4)))
-  #define ALIGN_8  __attribute__ ((aligned(8)))
-  #define ALIGN_16  __attribute__ ((aligned(16)))
-  #define ALIGN_24  __attribute__ ((aligned(24)))
-  #define ALIGN_32 __attribute__ ((aligned(32)))
-#else
-  #define ALIGN_4
-  #define ALIGN_8
-  #define ALIGN_16
-  #define ALIGN_24
-  #define ALIGN_32
-#endif
 
 #define NUM_PIDS_IN_COMPOUND_PIDS 6
 
