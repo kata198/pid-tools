@@ -39,6 +39,30 @@ static inline void usage()
 
 #define POLL_TIME ( USEC_IN_SECOND / 100.0 )
 
+#define ERR_NONE (0)
+#define ERR_INVALID_PID_FORMAT (1)
+#define ERR_NO_SUCH_PID (2)
+
+static unsigned int setup_proc_path(char *procPath, const char* pidStr)
+{
+    static pid_t pid;
+
+    pid = strtoint(pidStr);
+    if ( pid <= 0 )
+    {
+        return ERR_INVALID_PID_FORMAT;
+    }
+
+
+    sprintf(&procPath[6], "%d", pid);
+    if ( access( procPath, F_OK ) != 0 )
+    {
+        /* Pid does not exist... */
+        return ERR_NO_SUCH_PID;
+    }
+
+    return ERR_NONE;
+}
 
 /**
  * main - takes one argument, the pid to wait on
@@ -47,10 +71,10 @@ static inline void usage()
 int main(int argc, char* argv[])
 {
 
-    static pid_t pid;
     static char procPath[64] = { '/', 'p', 'r', 'o', 'c', '/' };
     static int inodeNum;
     static int curInode;
+    static unsigned int tmp;
 
     if ( argc != 2 ) {
         fputs("Invalid number of arguments.\n\n", stderr);
@@ -70,15 +94,28 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    pid = strtoint(argv[1]);
-    if ( pid <= 0 )
+    tmp = setup_proc_path(procPath, argv[1]);
+
+    if ( unlikely( tmp != ERR_NONE ) )
     {
-        fprintf(stderr, "Invalid pid: %s\n", argv[1]);
-        return 1;
+        switch(tmp)
+        {
+            case ERR_NONE:
+                break;
+            case ERR_INVALID_PID_FORMAT:
+                fprintf(stderr, "Invalid pid: %s\n", argv[1]);
+                return 1;
+                break;
+            case ERR_NO_SUCH_PID:
+                return 127;
+                break;
+            default:
+                fprintf(stderr, "Unexpected return from setup_proc_path!\n");
+                return 1;
+                break;
+        }
     }
 
-
-    sprintf(&procPath[6], "%d", pid);
     if ( access( procPath, F_OK ) != 0 )
     {
         /* Pid does not exist... */
