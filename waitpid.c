@@ -15,10 +15,14 @@
 #define __USE_XOPEN_EXTENDED
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #include "pid_tools.h"
 
 #include "pid_utils.h"
+#include "pid_inode_utils.h"
  
 const volatile char *copyright = "waitpid - Copyright (c) 2017 Tim Savannah.";
 
@@ -35,6 +39,7 @@ static inline void usage()
 
 #define POLL_TIME ( USEC_IN_SECOND / 100.0 )
 
+
 /**
  * main - takes one argument, the pid to wait on
  *
@@ -42,9 +47,10 @@ static inline void usage()
 int main(int argc, char* argv[])
 {
 
-    pid_t pid;
+    static pid_t pid;
     static char procPath[64] = { '/', 'p', 'r', 'o', 'c', '/' };
-
+    static int inodeNum;
+    static int curInode;
 
     if ( argc != 2 ) {
         fputs("Invalid number of arguments.\n\n", stderr);
@@ -71,6 +77,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+
     sprintf(&procPath[6], "%d", pid);
     if ( access( procPath, F_OK ) != 0 )
     {
@@ -78,9 +85,18 @@ int main(int argc, char* argv[])
         return 127;
     }
 
+    inodeNum = curInode = get_inode_by_path(procPath);
+    if ( inodeNum == -1 )
+    {
+        /* Cannot stat. */
+        return 127;
+    }
+    
+    
     do {
         usleep ( POLL_TIME );
-    }while( access( procPath, F_OK) == 0);
+        curInode = get_inode_by_path(procPath);
+    }while( access( procPath, F_OK) == 0 && inodeNum == curInode);
 
 
     return 0;
