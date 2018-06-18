@@ -265,6 +265,10 @@ int main(int argc, char* argv[])
     numItems = 0;
     curCp = cpList;
 
+    /* Iterate over entries in /proc looking for numeric folders.
+     *   These are active pids.
+     *   Directory info is returned already-sorted, so no need to sort output
+     */
     procDir = opendir("/proc");
     while( (dirInfo = readdir(procDir)) )
     {
@@ -274,6 +278,10 @@ int main(int argc, char* argv[])
 
             nextPid = atoi(nextPidStr);
             ppid = getPpid(nextPid);
+            /* Iterate over each argument and if parent pid of
+             *   entryy we are checking is a match, we add to list.
+             * Duplicates are handled by break-ing after a match.
+             */
             for( i=0; i < numArgs; i++ )
             {
                 providedPid = providedPids[i];
