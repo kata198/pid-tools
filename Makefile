@@ -215,8 +215,8 @@ bin/isachildof : ${DEPS} isachildof.o
 bin/getppid : ${DEPS}  getppid.o
 	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getppid.o -o bin/getppid
 
-bin/getcpids : ${DEPS} getcpids.o
-	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getcpids.o -o bin/getcpids
+bin/getcpids : ${DEPS} getcpids.o ${SIMPLE_INT_MAP_OBJS}
+	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getcpids.o ${SIMPLE_INT_MAP_OBJS} -o bin/getcpids
 
 bin/getpcmd : ${DEPS} getpcmd.o
 	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpcmd.o -o bin/getpcmd

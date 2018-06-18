@@ -23,172 +23,64 @@
 #include "pid_tools.h"
 #include "pid_utils.h"
 
+#include "simple_int_map.h"
+
 #include "ppid.h"
 
 const volatile char *copyright = "getcpids - Copyright (c) 2016, 2017, 2018 Tim Savannah.";
 
 static inline void usage()
 {
-    fputs("Usage: getcpids [pid] (Optional: [pid2] [pid..N])\n", stderr);
-    fputs("  Prints the child process ids (pids) belonging to a given pid or pids.\n", stderr);
+    fputs("Usage: getcpids (Options) [pid] (Optional: [pid2] [pid..N])\n", stderr);
+    fputs("  Prints the child process ids (pids) belonging to a given pid or pids.\n\n", stderr);
+    fputs("    Options:\n\t\t-r\t\tRecursive mode. Gets child pids, and their children, and so on.\n\n", stderr);
 }
 
 
-#define NUM_PIDS_IN_COMPOUND_PIDS 6
-
-/* 32 bytes on 64-bit system (8-byte void pointer).
-*/
-typedef struct {
-    pid_t pids[NUM_PIDS_IN_COMPOUND_PIDS] ALIGN_4;
-    /*pid_t pid2;
-    pid_t pid3;
-    pid_t pid4;
-    pid_t pid5;
-    pid_t pid6;
-*/
-    void *next;
-}compound_pids ALIGN_32;
-
-/* CP_NEXT - Returns the "next" compound_pids, cast correctly */
-#define CP_NEXT(cp) ((compound_pids *)cp->next)
-
-/* cp_init - 
- *  Create a compound_pids object, zeroed-out.
- */
-static inline compound_pids* cp_init(void)
+static int cmp_pids(const void *p1, const void *p2)
 {
-    compound_pids *ret;
+    pid_t val1, val2;
 
-    ret = (compound_pids *) calloc(sizeof(compound_pids), 1);
+    val1 = *((pid_t *)p1);
+    val2 = *((pid_t *)p2);
 
-    return ret;
+    return val1 - val2;
 }
 
-/* cp_destroy -
- *   Unallocate a compound_pids object and all associated objects linked via "next"
- */
-static void cp_destroy(compound_pids *cp)
+/* TODO: Investigate if we strip out from allPidsList when we add if we can speedup getcpids 1 -r more */
+static void get_cpids_recursive(SimpleIntMap *matchedPidsMap, pid_t providedPid, pid_t *allPids, size_t allPidsLen)
 {
-    /* Recurse all the way to the last, and start freeing in reverse */
-    if ( cp->next != NULL )
-    {
-        cp_destroy( (compound_pids*) cp->next );
-    }
-
-    free(cp);
-}
-
-
-/*
- * cp_extend - Extends a compound_pids struct by filling in "next".
- *
- *   Returns the extension.
- */
-static compound_pids* cp_extend(compound_pids *toExtend)
-{
-    compound_pids *extension;
-
-    extension = cp_init();
-    toExtend->next = extension;
-
-    return extension;
-}
-
-/*
- * cp_add - Add an element to the provided compound_pids struct, #cp, and if necessary
- *   extend it.
- *
- *   Returns the next compound_pids for adding (so "cp" if there is unused space still,
- *     otherwise the added extension is returned. )
- *
- *     offset - int pointer to current offset within compound_pids structure.
- *       This will be incremented as each item is added, and reset when extended.
- *       First add on an empty compound_pids structure should be '0'
- *
- *     pid - pid_t to add to cp or its extension (if extension is required)
- */
-static inline compound_pids* cp_add(compound_pids *cp, unsigned int *offset, pid_t pid)
-{
-    if ( *offset == NUM_PIDS_IN_COMPOUND_PIDS )
-    {
-        /* If we have exceeded the number of pids in this struct,
-         *   we have to extend.
-         *
-         *  To extend, we allocate another compound_pids struct and point the current "next"
-         *    pointer to this new structure.
-         */
-        cp = cp_extend(cp);
-
-        *offset = 0;
-    }
-
-    /* Calculate the offset to the pid# we are trying to set */
-    cp->pids[*offset] = pid;
-
-    *offset += 1;
-
-    return cp;
-}
-
-/*
- * cp_to_list - Convert a compound_pids structure and all extensions
- *   into a null-terminated array.
- *
- *   Returns an allocated pointer to a pid_t array, with the final
- *    entry being "0" (not a valid pid).
- *
- *   cp - The head compound_pids structure
- *
- *   numEntries - The number of entries in cp and all extensions.
- *
- *   NOTE: since "numEntries" is required, null-terminating really
- *     isn't required. 
- *
- *     This makes it simpler if one-day I decide to turn this stuff
- *     into a shared-object. "numEntries" could then be calculated by
- *     a yet-existing "cp_len" function.
- *
- *     I prefer to leave it null-terminated, so that it may have use
- *     in external functions which rely on such and don't take a 
- *     length param, rather than relying on the user realloc'ing in this
- *     case.
- */
-static pid_t* cp_to_list(compound_pids *cp, unsigned int numEntries)
-{
-    pid_t *ret, *retPtr;
-    compound_pids *cur;
     unsigned int i;
 
-    /* ret will normally get null terminated by assigning to a 0 cur->pids[i]
-     *   In the case that all cur->pids have assigned pids but there is no next,
-     *     we must explicitly zero the end
-     */
-    ret = malloc(sizeof(pid_t) * (numEntries + 1));
-    retPtr = ret;
-    
-    cur = cp;
+    static pid_t nextPid;
+    static pid_t ppid;
 
-    do {
-        for(i=0; i < NUM_PIDS_IN_COMPOUND_PIDS; i++, retPtr += 1)
+    for( i=0; i < allPidsLen; i++ )
+    {
+        nextPid = allPids[i];
+        if ( simple_int_map_contains( matchedPidsMap, nextPid ) )
+            continue; /* Already added and recursed */
+
+        ppid = getPpid(nextPid);
+        if(ppid == providedPid)
         {
-            *retPtr = cur->pids[i];
-            if ( *retPtr == 0 )
-                goto after_loop;
+            /* Already known to not be present because of above check */
+            simple_int_map_add( matchedPidsMap, nextPid );
+            get_cpids_recursive( matchedPidsMap, nextPid, allPids, allPidsLen );
+            /*
+            if ( simple_int_map_add( matchedPidsMap, nextPid ) )
+            {*/
+                /* 
+                   We successfully added this entry (wasn't already in list)
+                    so recurse to add all children of matched pid 
+                */
+                /*
+                get_cpids_recursive( matchedPidsMap, nextPid, allPids, allPidsLen );
+            }
+                */
         }
-
-        cur = CP_NEXT(cur);
-    }while( !!(cur) );
-
-    /* Handle the case where all pids were assigned in the last compound_pids struct,
-     *   so we didn't assign the last *retPtr to 0
-     */
-    *retPtr = 0;
-
-after_loop:
-
-    return ret;
+    }
 }
-
 
 /**
  * main - Takes one argument, the pid. Will scan
@@ -198,10 +90,12 @@ after_loop:
  */
 int main(int argc, char* argv[])
 {
+    SimpleIntMap *matchedPidsMap = NULL;
 
-    compound_pids *cpList, *curCp;
+    SimpleIntMap *allPidsMap = NULL;
+    pid_t *allPids = NULL;
+    size_t allPidsLen = 0;
 
-    unsigned int cpOffset;
     DIR *procDir;
     struct dirent *dirInfo;
     pid_t *providedPids = NULL;
@@ -211,11 +105,15 @@ int main(int argc, char* argv[])
     pid_t ppid;
 
     pid_t *printList;
-    unsigned int numItems;
-    unsigned int i;
-    unsigned int numArgs;
+    size_t numItems;
+    unsigned int i, j;
+    unsigned int numArgs; /* Total number of arguments */
+    unsigned int numPidArgs; /* Total number of arguments that were pids */
+
+    char isRecursiveMode = 0; /* Set to 1 in recursive mode */
 
     int returnCode = 0;
+
 
     if ( argc < 2 ) {
         fputs("Invalid number of arguments.\n\n", stderr);
@@ -225,8 +123,8 @@ int main(int argc, char* argv[])
 
 
     numArgs = argc - 1;
+    numPidArgs = 0;
 
-    cpList = NULL;
     providedPids = malloc( sizeof(pid_t) * numArgs );
 
     for( i=1; i <= numArgs; i++ )
@@ -236,18 +134,24 @@ int main(int argc, char* argv[])
         if ( providedPid <= 0 )
         {
             /* If we failed to convert, maybe it is an option */
-            if ( strncmp("--help", argv[i], 6) == 0 )
+            if ( strcmp("--help", argv[i]) == 0 )
             {
                 usage();
                 returnCode = 0;
                 goto __cleanup_and_exit;
             }
             
-            if ( strncmp("--version", argv[i], 9) == 0 )
+            if ( strcmp("--version", argv[i]) == 0 )
             {
                 fprintf(stderr, "\ngetcpids version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
                 returnCode = 0;
                 goto __cleanup_and_exit;
+            }
+
+            if ( argv[i][0] == '-' && (argv[i][1] == 'r' || argv[i][1] == 'R') && argv[i][2] == '\0' )
+            {
+                isRecursiveMode = 1;
+                continue;
             }
 
             /* Nope -- fail out. */
@@ -256,15 +160,18 @@ int main(int argc, char* argv[])
             goto __cleanup_and_exit;
         }
 
-        providedPids[i - 1] = providedPid;
+        providedPids[ numPidArgs++ ] = providedPid;
     }
 
-    cpList = cp_init();
 
-    cpOffset = 0;
     numItems = 0;
-    curCp = cpList;
 
+    matchedPidsMap = simple_int_map_create(10);
+    /* First, assemble all pids into a single map (so we aren't opendir/readdir/closedir
+     *    over and over with conflicts in static data in recursive mode )
+     */
+
+    allPidsMap = simple_int_map_create(25);
     /* Iterate over entries in /proc looking for numeric folders.
      *   These are active pids.
      *   Directory info is returned already-sorted, so no need to sort output
@@ -272,56 +179,82 @@ int main(int argc, char* argv[])
     procDir = opendir("/proc");
     while( (dirInfo = readdir(procDir)) )
     {
-            nextPidStr = dirInfo->d_name;
-            if(!isdigit(nextPidStr[0]))
-                    continue;
+        nextPidStr = dirInfo->d_name;
+        if(!isdigit(nextPidStr[0]))
+                continue;
 
-            nextPid = atoi(nextPidStr);
-            ppid = getPpid(nextPid);
-            /* Iterate over each argument and if parent pid of
-             *   entryy we are checking is a match, we add to list.
-             * Duplicates are handled by break-ing after a match.
-             */
-            for( i=0; i < numArgs; i++ )
-            {
-                providedPid = providedPids[i];
-                if(ppid == providedPid)
-                {
-                    curCp = cp_add(curCp, &cpOffset, nextPid);
-                    numItems++;
-                    break;
-                }
-            }
+        nextPid = atoi(nextPidStr);
+
+        simple_int_map_add( allPidsMap, nextPid );
     }
     closedir(procDir);
 
-    /* No children. */
-    if ( cpList->pids[0] == 0 )
+    allPids = simple_int_map_values(allPidsMap, &allPidsLen);
+
+    for( i=0; i < allPidsLen; i++ )
+    {
+        nextPid = allPids[i];
+
+        if ( i > 0 && simple_int_map_contains( matchedPidsMap, nextPid ) )
+            continue;
+
+        ppid = getPpid(nextPid);
+
+        /* Iterate over each argument and if parent pid of
+         *   entryy we are checking is a match, we add to list.
+         * Duplicates are handled by break-ing after a match.
+         */
+        for( j=0; j < numPidArgs; j++ )
+        {
+            providedPid = providedPids[j];
+            if(ppid == providedPid)
+            {
+                /* Is recursive, so add this pid and recurse */
+                simple_int_map_add( matchedPidsMap, nextPid );
+
+                if ( isRecursiveMode == 0 )
+                {
+                    break;
+                }
+                else
+                {
+                    get_cpids_recursive( matchedPidsMap, nextPid , allPids, allPidsLen);
+                }
+            }
+        }
+    }
+
+    numItems = MAP_NUM_ENTRIES(matchedPidsMap);
+    /* Check for no matched children. */
+    if ( numItems == 0 )
         goto __cleanup_and_exit;
 
+    printList = simple_int_map_values(matchedPidsMap, &numItems);
 
-    printList = cp_to_list(cpList, numItems);
+    qsort(printList, numItems, sizeof(int), cmp_pids);
 
-    pid_t *curPtr;
-
-    for(curPtr = printList ; ; )
+    for( i=0; i < numItems; i++ )
     {
-        printf("%d", *curPtr);
-        curPtr += 1;
-        if ( *curPtr == 0 )
-            break;
-        putchar(' ');
+        printf("%d", printList[i]);
+        if ( i + 1 < numItems )
+            putchar(' ');
     }
     putchar('\n');
     free(printList);
 
 __cleanup_and_exit:
 
-    if ( cpList != NULL )
-        cp_destroy(cpList);
-
     if ( providedPids != NULL )
         free(providedPids);
+
+    if ( matchedPidsMap != NULL )
+        simple_int_map_destroy(matchedPidsMap);
+
+    if ( allPidsMap != NULL )
+        simple_int_map_destroy(allPidsMap);
+
+    if ( allPids != NULL )
+        free(allPids);
 
     return returnCode;
 }
