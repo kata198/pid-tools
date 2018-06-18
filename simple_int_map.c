@@ -132,7 +132,7 @@ int simple_int_map_add(SimpleIntMap *intMap, int toAdd)
     return 0; /* Should be unreachable */
 }
 
-int *simple_int_map_values(SimpleIntMap *intMap, int *retLen)
+int *simple_int_map_values(SimpleIntMap *intMap, size_t *retLen)
 {
     int *ret;
     unsigned int i;

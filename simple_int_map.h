@@ -60,6 +60,7 @@ typedef struct {
 /* NODE_NEXT - Get the "next" node from a current node */
 #define NODE_NEXT(curNode) ((struct SimpleIntMapNode*)(curNode)->next)
 
+#define MAP_NUM_ENTRIES(mapObj) ((mapObj)->numEntries)
 
 /*******************
  * PUBLIC FUNCTIONS
@@ -119,11 +120,11 @@ int simple_int_map_add(SimpleIntMap *intMap, int toAdd);
  *
  *      @param retLen <int *> - The size of the returned list will be stored here
  *
- *      @return <int *> - A list of all the values in #intMap. Size of allocation is stored in #retLen
+ *      @return <size_t *> - A list of all the values in #intMap. Size of allocation is stored in #retLen
  *
  *          You are responsible for freeing this list
  */
-int *simple_int_map_values(SimpleIntMap *intMap, int *retLen);
+int *simple_int_map_values(SimpleIntMap *intMap, size_t *retLen);
 
 
 
