@@ -132,6 +132,94 @@ int simple_int_map_add(SimpleIntMap *intMap, int toAdd)
     return 0; /* Should be unreachable */
 }
 
+int simple_int_map_rem(SimpleIntMap *intMap, int toRem)
+{
+    int modSize;
+    int idxVal;
+    struct SimpleIntMapNode *intMapNode;
+
+    modSize = intMap->modSize;
+
+    idxVal = toRem % modSize;
+
+    intMapNode = &(intMap->nodeData[idxVal]);
+
+    /* See if any data is yet mapped at this mod container */
+    if ( unlikely( ! intMap->nodeHasData[idxVal] ) )
+    {
+        return 0;
+    }
+    else
+    {
+        /* There are entries in this bin, see if we can find ours and if so remove it. */
+        struct SimpleIntMapNode *prevNode;
+        struct SimpleIntMapNode *curNode;
+        struct SimpleIntMapNode *nextNode;
+
+        prevNode = NULL;
+        curNode = intMapNode;
+
+        while ( 1 ) 
+        {
+            if ( curNode->data == toRem )
+            {
+                nextNode = NODE_NEXT(curNode);
+                /* Found our entry, now remove it. */
+                if ( prevNode == NULL )
+                {
+                    /* We are on the first node. */
+                    if ( nextNode == NULL )
+                    {
+                        /* There is no next node, so remove this bin. */
+                        intMap->nodeHasData[idxVal] = 0;
+                        /* 
+                           Zero-out the "data", even though it should be skipped
+                             since nodeHasData[idxVal] == 0
+                         */
+                        curNode->data = 0;
+                    }
+                    else
+                    {
+                        /* There is a next node, so lets move it to the first node */
+                        curNode->data = nextNode->data;
+                        curNode->next = (void*)nextNode->next;
+                        free(nextNode);
+
+                    }
+
+                }
+                else
+                {
+                    /* We are NOT on the first node */
+
+                    /* Make prevNode point to next and free this node */
+                    prevNode->next = (void*)nextNode;
+                    free(curNode);
+                }
+
+                intMap->numEntries -= 1;
+                return 1;
+            }
+            else
+            {
+                /* Not a match here, move onto next node */
+                prevNode = curNode;
+                curNode = NODE_NEXT( curNode );
+                if ( curNode == NULL )
+                {
+                    /* We have moved to the end of this bucket's linked list
+                        without finding a match. Must not be present.
+                    */
+                    return 0;
+                }
+            }
+
+        } /* while ( 1 ) */
+    } /* else */
+
+    return 0; /* Should be unreachable */
+}
+
 int *simple_int_map_values(SimpleIntMap *intMap, size_t *retLen)
 {
     int *ret;

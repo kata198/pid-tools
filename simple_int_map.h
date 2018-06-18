@@ -113,6 +113,20 @@ int simple_int_map_contains(SimpleIntMap *intMap, int testInt);
  */
 int simple_int_map_add(SimpleIntMap *intMap, int toAdd);
 
+
+/**
+ *    simple_int_map_rem - Remove an entry from the map.
+ *
+ *      @param intMap <SimpleIntMap *> - Pointer to the map from which to remove
+ *
+ *      @param toRem <int> - Integer to remove
+ *
+ *      @return <int> - 1 if removed
+ *                      0 if wasn't present
+ */
+int simple_int_map_rem(SimpleIntMap *intMap, int toRem);
+
+
 /**
  *    simple_int_map_values - Return a list of all the values in #intMap
  *
