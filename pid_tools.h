@@ -20,7 +20,7 @@
   #define ALIGN_16  __attribute__ ((aligned(16)))
   #define ALIGN_32 __attribute__ ((aligned(32)))
 
-  #define builtin_ceil(x) (__builtin_ceil((x)))
+  #define builtin_ceil(_x) ( __builtin_ceil((_x)) )
 
 #else
 
@@ -35,7 +35,7 @@
   #define ALIGN_16
   #define ALIGN_32
 
-  #define builtin_ceil(x) ( ((float)(x)) - ((int(x))) < 1e-6 ? ( int((x)) ) : (int((float)(x)) + 1) )
+  #define builtin_ceil(_x) ( ((float)(_x)) - ((int(_x))) < 1e-6 ? ( int((_x)) ) : (int((float)(_x)) + 1) )
 
 #endif
 
@@ -44,15 +44,20 @@
   #define INLINE_EXE_ONLY inline
   #define STATIC_INLINE_EXE_ONLY static
 
+  #define STATIC_SHARED_ONLY static
+
   #define ALWAYS_INLINE_EXE_ONLY ALWAYS_INLINE
 #else
   #define STATIC_EXE_ONLY
   #define INLINE_EXE_ONLY
+
+  #define STATIC_SHARED_ONLY
+
   #define STATIC_INLINE_EXE_ONLY
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-const volatile char *PID_TOOLS_VERSION = "3.1.1";
-const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2017 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
+STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_VERSION = "3.1.1";
+STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2017 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
 
 #endif
