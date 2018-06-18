@@ -19,7 +19,7 @@
 /* ENFORCE_UNIQUE_ENTRIES - If defined, duplicate values are not added (so all values are unique) */
 #define ENFORCE_UNIQUE_ENTRIES
 
-SimpleIntMap *simple_int_map_create(int modSize)
+SimpleIntMap *simple_int_map_create(unsigned int modSize)
 {
     SimpleIntMap *ret;
 
@@ -34,7 +34,7 @@ SimpleIntMap *simple_int_map_create(int modSize)
     return ret;
 }
 
-int _simple_int_map_search_node_data(struct SimpleIntMapNode *nodeToSearch, int findInt)
+static int _simple_int_map_search_node_data(struct SimpleIntMapNode *nodeToSearch, int findInt)
 {
     struct SimpleIntMapNode *curNode;
 
@@ -52,8 +52,8 @@ int _simple_int_map_search_node_data(struct SimpleIntMapNode *nodeToSearch, int 
 
 int simple_int_map_contains(SimpleIntMap *intMap, int testInt)
 {
-    int modSize;
-    int idxVal;
+    unsigned int modSize;
+    unsigned int idxVal;
 
     modSize = intMap->modSize;
 
@@ -70,8 +70,8 @@ int simple_int_map_contains(SimpleIntMap *intMap, int testInt)
 
 int simple_int_map_add(SimpleIntMap *intMap, int toAdd)
 {
-    int modSize;
-    int idxVal;
+    unsigned int modSize;
+    unsigned int idxVal;
     struct SimpleIntMapNode *intMapNode;
 
     modSize = intMap->modSize;
@@ -134,8 +134,8 @@ int simple_int_map_add(SimpleIntMap *intMap, int toAdd)
 
 int simple_int_map_rem(SimpleIntMap *intMap, int toRem)
 {
-    int modSize;
-    int idxVal;
+    unsigned int modSize;
+    unsigned int idxVal;
     struct SimpleIntMapNode *intMapNode;
 
     modSize = intMap->modSize;
@@ -304,3 +304,118 @@ void simple_int_map_destroy(SimpleIntMap *intMap)
 
 }
 
+/*typedef struct {
+    
+    int curBucket;
+    struct SimpleIntMapNode *curNode;
+
+} SimpleIntMapIterator;
+*/
+
+SimpleIntMapIterator *simple_int_map_get_iter(SimpleIntMap *intMap)
+{
+    SimpleIntMapIterator *iter = calloc( sizeof(SimpleIntMapIterator), 1 );
+
+    iter->intMap = intMap;
+
+    return iter;
+}
+
+void simple_int_map_iter_destroy(SimpleIntMapIterator *mapIter)
+{
+    free( mapIter );
+}
+
+void simple_int_map_iter_reset(SimpleIntMapIterator *mapIter)
+{
+    mapIter->curBucket = 0;
+    mapIter->curNode = NULL;
+}
+
+static int _simple_int_map_move_iter_forward(SimpleIntMapIterator *mapIter)
+{
+    SimpleIntMap *intMap;
+    struct SimpleIntMapNode *nextNode;
+    struct SimpleIntMapNode *curNode;
+    int bucketNum;
+    int stopIteration = 0;
+
+    intMap = mapIter->intMap;
+
+    curNode = mapIter->curNode;
+
+    if ( curNode != NULL )
+    {
+    
+        nextNode = NODE_NEXT(curNode);
+        if ( nextNode != NULL )
+        {
+            mapIter->curNode = nextNode;
+            return stopIteration;
+        }
+        else
+        {
+            /* Clear curNode marker, bump up bucket, and do the walk */
+            mapIter->curNode = NULL;
+            mapIter->curBucket += 1;
+        }
+    }
+
+    if ( unlikely( mapIter->curBucket >= intMap->modSize ) )
+    {
+        /* We are already at the end. */
+        stopIteration = 1;
+        return stopIteration;
+    }
+
+    for( bucketNum = mapIter->curBucket; bucketNum < intMap->modSize; bucketNum++ )
+    {
+        if ( intMap->nodeHasData[ bucketNum ] )
+        {
+            mapIter->curBucket = bucketNum;
+            mapIter->curNode = &(intMap->nodeData[bucketNum]);
+            return stopIteration;
+        }
+    }
+    /* We hit the end without finding a value */
+    mapIter->curBucket = bucketNum;
+    mapIter->curNode = NULL;
+
+    stopIteration = 1;
+    
+    return stopIteration;
+}
+
+int simple_int_map_iter_next(SimpleIntMapIterator *mapIter, int *completedIterationPtr)
+{
+    int ret;
+    struct SimpleIntMapNode *curNode;
+    int stopIteration = 0;
+
+    curNode = mapIter->curNode;
+
+    if ( curNode == NULL )
+    {
+        /* If we aren't on a node yet, move onto one */
+        stopIteration = _simple_int_map_move_iter_forward(mapIter);
+        if ( stopIteration )
+            *completedIterationPtr = stopIteration;
+    }
+
+    curNode = mapIter->curNode;
+    if ( curNode == NULL )
+    {
+        /* No value, stop iteration. */
+        *completedIterationPtr = 2;
+        return 0;
+    }
+
+    /* If we moved onto a node, grab and return data */
+    ret = curNode->data;
+
+    stopIteration = _simple_int_map_move_iter_forward(mapIter);
+    if ( stopIteration )
+        *completedIterationPtr = stopIteration;
+
+    return ret;
+}

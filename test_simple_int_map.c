@@ -16,6 +16,26 @@
 #include "pid_tools.h"
 #include "simple_int_map.h"
 
+
+void iterateOverMap(SimpleIntMap *intMap)
+{
+    SimpleIntMapIterator *mapIter;
+    int stopIteration = 0;
+    int val;
+
+    printf ("++++ Starting iterate over map\n");
+
+    mapIter = simple_int_map_get_iter( intMap );
+    while(!stopIteration)
+    {
+        val = simple_int_map_iter_next(mapIter, &stopIteration);
+        printf("Val is: %d and stopIteration is %d\n", val, stopIteration);
+    }
+    simple_int_map_iter_destroy(mapIter);
+
+    printf ("---- Ending iterate over map\n");
+}
+
 int main(int argc, char* argv[])
 {
     SimpleIntMap *intMap;
@@ -24,7 +44,10 @@ int main(int argc, char* argv[])
     size_t valuesSize;
     int i;
 
+
     intMap = simple_int_map_create(10);
+
+    iterateOverMap(intMap);
 
     ret = simple_int_map_add(intMap, 1400); printf("1400 Ret=%d\n", ret);
     ret = simple_int_map_add(intMap, 1400); printf("1400 Ret=%d\n", ret);
@@ -36,6 +59,7 @@ int main(int argc, char* argv[])
     ret = simple_int_map_add(intMap, 1005); printf("1005 Ret=%d\n", ret);
     ret = simple_int_map_add(intMap, 10005); printf("10005 Ret=%d\n", ret);
 
+    iterateOverMap(intMap);
     printf("Doing contins..\n");
 
     ret = simple_int_map_contains(intMap, 1005); printf("contains 1005? %s\n", ret == 1 ? "true" : "false");
@@ -100,6 +124,8 @@ int main(int argc, char* argv[])
     {
         printf("values[%d] = %d\n", i, values[i]);
     }
+
+    iterateOverMap(intMap);
 
     free(values);
     simple_int_map_destroy(intMap);

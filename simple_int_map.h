@@ -44,7 +44,7 @@ struct SimpleIntMapNode {
  */
 typedef struct {
 
-    int modSize;
+    unsigned int modSize;
     struct SimpleIntMapNode *nodeData;
     char *nodeHasData; /* TODO: instead of 1 or 0 taking up entire byte, split by bits? */
 
@@ -52,6 +52,14 @@ typedef struct {
 
 } SimpleIntMap ALIGN_32;
 
+
+typedef struct {
+    
+    unsigned int curBucket;
+    struct SimpleIntMapNode *curNode;
+    SimpleIntMap *intMap;
+
+} SimpleIntMapIterator;
 
 /*******************
  * MACROS
@@ -69,7 +77,7 @@ typedef struct {
 /**
  *    simple_int_map_create - Allocate a SimpleIntMap for use
  *
- *          @param modSize <int> - The number of buckets and modulus used in this map.
+ *          @param modSize <uint> - The number of buckets and modulus used in this map.
  *                      Powers of 10 work well.
  *
  *                      Smaller values take up less space but may be less efficient
@@ -78,7 +86,7 @@ typedef struct {
  *
  *              This must be freed using simple_int_map_destroy
  */
-SimpleIntMap *simple_int_map_create(int modSize);
+SimpleIntMap *simple_int_map_create(unsigned int modSize);
 
 /**
  *    simple_int_map_destroy - Deallocate a SimpleIntMap including all referenced memory
@@ -140,6 +148,56 @@ int simple_int_map_rem(SimpleIntMap *intMap, int toRem);
  */
 int *simple_int_map_values(SimpleIntMap *intMap, size_t *retLen);
 
+/*
+  * Constants for the `completedIterationPtr' values below.
+ */
+
+/* MAP_ITER_VALUES_REMAIN - More values remain (you can call next again) */
+#define MAP_ITER_VALUES_REMAIN (0)
+/* MAP_ITER_RETURNED_FINAL_VALUE - The returned value is the last one in the map. */
+#define MAP_ITER_RETURNED_FINAL_VALUE (1)
+/* MAP_ITER_PAST_END_RETURN_INVALID - The returned value is invalid, iter was already past the end or empty map */
+#define MAP_ITER_PAST_END_RETURN_INVALID (2)
+
+/**
+ *   simple_int_map_get_iter - Get an iterator for iterating over a SimpleIntMap's values
+ *
+ *      @param intMap <SimpleIntMap *> - Pointer to the map of interest
+ *
+ *      @return <SimpleIntMapIterator *> - Iterator object related to this map.
+ *            You can have multiple of these, and are responsible for freeing the memory
+ *             (via simple_int_map_destroy)
+ */
+SimpleIntMapIterator *simple_int_map_get_iter(SimpleIntMap *intMap);
+
+/**
+ *   simple_int_map_destroy - Destroy and free an allocated mapIter
+ *
+ *      @param mapIter <SimpleIntMapIterator *> - An active iterator
+ */
+void simple_int_map_iter_destroy(SimpleIntMapIterator *mapIter);
+
+/**
+ *   simple_int_map_iter_reset - Reset the given map iterator, so next value returned will be first value in the set
+ *
+ *      @param mapIter <SimpleIntMapIterator *> - An active iterator
+ */
+void simple_int_map_iter_reset(SimpleIntMapIterator *mapIter);
+
+/**
+ *    simple_int_map_iter_next - Return the next value in the series and move forward the iter pointers
+ *
+ *          @param mapIter <SimpleIntMapIterator *> - An active iterator
+ *
+ *          @param completedIterationPtr <int *> - Will contain one of the MAP_ITER_* constants above
+ *              which will inform you if you got the last value ( 1 ), have more values remaining ( 0 ),
+ *              or if empty list / called past the end ( 2 ).
+ *
+ *              keepGoing = !!(*completedIterationPtr > 0)
+ *
+ *          @return <int> - The next value in this iteration, unless *completedIterationPtr == MAP_ITER_PAST_END_RETURN_INVALID
+ */
+int simple_int_map_iter_next(SimpleIntMapIterator *mapIter, int *completedIterationPtr);
 
 
 #endif
