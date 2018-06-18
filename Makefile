@@ -90,6 +90,8 @@ DEPS = bin/.created ${CFLAGS_HASH_FILE} pid_tools.h pid_utils.h
 
 INODE_UTILS_DEPS = pid_inode_utils.h
 
+SIMPLE_INT_MAP_OBJS = simple_int_map.o
+
 # All output executables
 ALL_FILES = bin/getppid \
 	bin/getcpids \
@@ -99,6 +101,7 @@ ALL_FILES = bin/getppid \
 	bin/waitpid \
 	bin/getpenv
 
+TEST_FILES = test_bin/test_simple_int_map
 
 # TARGET all - Default target
 all: ${DEPS} ${ALL_FILES} .dummy
@@ -120,6 +123,9 @@ clean:
 # TARGET distclean - Clean target
 distclean:
 	@ make clean
+
+tests: ${TEST_FILES}
+	
 
 # TARGET install - Install stuff to destdir
 install:
@@ -193,6 +199,9 @@ waitpid.o : ${DEPS} waitpid.c
 getpenv.o : ${DEPS} getpenv.c
 	gcc ${USE_CFLAGS} getpenv.c -c -o getpenv.o
 
+simple_int_map.o : ${DEPS} simple_int_map.h simple_int_map.c
+	gcc ${USE_CFLAGS} -DSHARED_LIB simple_int_map.c -c -o simple_int_map.o
+
 ########
 #  EXECUTABLES
 ##################
@@ -214,9 +223,12 @@ bin/getpcmd : ${DEPS} getpcmd.o
 
 bin/getpenv : ${DEPS} getpenv.o
 	gcc ${USE_CFLAGS} ${USE_LDFLAGS} getpenv.o -o bin/getpenv
-	
 
 bin/waitpid: ${DEPS} waitpid.o
 	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
+
+test_bin/test_simple_int_map: ${DEPS} ${SIMPLE_INT_MAP_OBJS} test_simple_int_map.c
+	mkdir -p test_bin
+	gcc ${USE_CFLAGS} test_simple_int_map.c ${SIMPLE_INT_MAP_OBJS} -o test_bin/test_simple_int_map
 
 # vim: set noexpandtab ts=4 sw=4 st=4 :
