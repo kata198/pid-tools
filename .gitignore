@@ -8,3 +8,4 @@ bin/
 *.orig
 *.rej
 *.tar.*
+.dummy
