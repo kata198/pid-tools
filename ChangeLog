@@ -1,10 +1,17 @@
-* Jun ** 2018 4.0.0
+* Jun 24 2018 4.0.0
+
+- Add "recursive" mode to 'getcpids' (use as `getcpids -r $PID'), which will get all children of given pid, their children, and so on for all levels of children
 
 - Some cleanups / code improvements
 
 - Allow 'waitpid' application to accept multiple pids and wait for all to complete
 
 - Allow 'getcpids' application to accept multiple pids and print the children of all arguments
+
+- Implement a simple integer hash-map.
+
+- Replace the "compound pids" large struct-based storage to the hash-map impl in getcpids.c. 
+  Since multiple pids are supported, this prevents duplicates in a recursive ( -r ) operation wherein both a parent and a child-at-some-level are given as arguments
 
 * Nov 22 2017 3.1.1
 
