@@ -1,5 +1,5 @@
 /*
- * pid_tools - Copyright (c) 2016, 2017 Timothy Savannah All Rights Reserved
+ * pid_tools - Copyright (c) 2016, 2017, 2018 Timothy Savannah All Rights Reserved
  *   Licensed under terms of GNU General Purpose License (GPL) version 2
  */
 #ifndef _PID_TOOLS_H
@@ -57,7 +57,7 @@
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_VERSION = "3.1.1";
-STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2017 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
+STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_VERSION = "4.0.0";
+STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2018 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
 
 #endif
