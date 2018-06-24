@@ -31,7 +31,12 @@ struct SimpleIntMapNode {
     void *next;
 
 } ALIGN_16; 
-
+/* NOTE: If we refactor the above to have int instead be a pointer, then
+ *         we can store a struct with its integer hash as first element.
+ *
+ *    For now, we don't need that, so for optimization purposes the
+ *         current implementation here is more like a "hashed set for ints"
+ */
 
 /**
  *   SimpleIntMap - The public structure for using a simple int map
