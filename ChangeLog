@@ -1,3 +1,8 @@
+* 5.0.0 - ??? ?? ????
+
+- Add a new utility, "getpmem", which will take one or more pids and print memory usage info on the related processes.
+
+
 * Jun 24 2018 4.0.0
 
 - Add "recursive" mode to 'getcpids' (use as `getcpids -r $PID'), which will get all children of given pid, their children, and so on for all levels of children
