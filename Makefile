@@ -99,7 +99,8 @@ ALL_FILES = bin/getppid \
 	bin/isachildof \
 	bin/getpcmd \
 	bin/waitpid \
-	bin/getpenv
+	bin/getpenv \
+	bin/getpmem
 
 TEST_FILES = test_bin/test_simple_int_map
 
@@ -199,6 +200,9 @@ waitpid.o : ${DEPS} waitpid.c
 getpenv.o : ${DEPS} getpenv.c
 	gcc ${USE_CFLAGS} getpenv.c -c -o getpenv.o
 
+getpmem.o : ${DEPS} getpmem.c
+	gcc ${USE_CFLAGS} getpmem.c -c -o getpmem.o
+
 simple_int_map.o : ${DEPS} simple_int_map.h simple_int_map.c
 	gcc ${USE_CFLAGS} -DSHARED_LIB simple_int_map.c -c -o simple_int_map.o
 
@@ -226,6 +230,9 @@ bin/getpenv : ${DEPS} getpenv.o
 
 bin/waitpid: ${DEPS} waitpid.o
 	gcc ${USE_CFLAGS} waitpid.o -o bin/waitpid
+
+bin/getpmem: ${DEPS} getpmem.o
+	gcc ${USE_CFLAGS} getpmem.o -o bin/getpmem
 
 test_bin/test_simple_int_map: ${DEPS} ${SIMPLE_INT_MAP_OBJS} test_simple_int_map.c
 	mkdir -p test_bin
