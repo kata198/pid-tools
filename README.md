@@ -93,7 +93,7 @@ Example:
 
 	[pid-tools]$ getpmem 365 1660
 
-	Memory info for pid: 365
+	Memory info for pid: 365 ( gmain )
 	----------------------------------------
 	RssAnon:            1704 kB
 	RssFile:            3844 kB
@@ -101,7 +101,7 @@ Example:
 	VmRSS:              5548 kB
 	========================================
 
-	Memory info for pid: 1660
+	Memory info for pid: 1660 ( bash )
 	----------------------------------------
 	RssAnon:          332376 kB
 	RssFile:          102088 kB
