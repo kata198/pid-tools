@@ -84,6 +84,32 @@ Example:
 	/home/blah/bin:/sbin:/usr/bin:/usr/local/bin:/opt/citrix/bin
 
 
+getpmem
+-------
+
+getpmem fetches memory information on one or more pids
+
+Example:
+
+	[pid-tools]$ getpmem 365 1660
+
+	Memory info for pid: 365
+	----------------------------------------
+	RssAnon:            1704 kB
+	RssFile:            3844 kB
+	RssShmem:              0 kB
+	VmRSS:              5548 kB
+	========================================
+
+	Memory info for pid: 1660
+	----------------------------------------
+	RssAnon:          332376 kB
+	RssFile:          102088 kB
+	RssShmem:           2120 kB
+	VmRSS:            436584 kB
+	========================================
+
+
 isaparentof
 ----------
 
