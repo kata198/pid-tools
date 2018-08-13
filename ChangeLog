@@ -3,7 +3,7 @@
 - Add a new utility, "getpmem", which will take one or more pids and print memory usage info on the related processes.
 
 
-* Jun 24 2018 4.0.0
+* 4.0.0 - Jun 24 2018
 
 - Add "recursive" mode to 'getcpids' (use as `getcpids -r $PID'), which will get all children of given pid, their children, and so on for all levels of children
 
@@ -18,13 +18,14 @@
 - Replace the "compound pids" large struct-based storage to the hash-map impl in getcpids.c. 
   Since multiple pids are supported, this prevents duplicates in a recursive ( -r ) operation wherein both a parent and a child-at-some-level are given as arguments
 
-* Nov 22 2017 3.1.1
+
+* 3.1.1 - Nov 22 2017
 
 - Fixup Makefile to pass along PREFIX correctly for "make install", and update
 install-into-home logic
 
 
-* Nov 22 2017 3.1.0
+* 3.1.0 - Nov 22 2017
 
 - Fix all memory leaks
 
@@ -43,20 +44,23 @@ install-into-home logic
 - Fix rare condition in getcpids where under certain circumstances an extra bogus pid could be printed (not sure if this was possible before, the rewrite may have exposed it)
 
 
-* Sep 1 2017 3.0.0
+* 3.0.0 - Sep 1 2017
 
 - Add `getpenv` application, which reads an environment variable from
 arbitrary process
 
 
-* May 11 2017 2.0.1
+* 2.0.1 - May 11 2017
+
 - Update Makefile to ease development and custom flags
 - Add some additional Makefile targets, which are listed in comments at top of
 Makefile
 - Add INSTALL file which describes how to compile and install/package
 - Work around a WRONG gcc warning (and remove need for -Wno-unused-function)
 
-* May 11 2017 2.0.0
+
+* 2.0.0 - May 11 2017
+
 - Add "waitpid" command, which waits for a given pid to terminate/complete
 - Fix where compilation wouldn't work by default on old compilers which
 defaulted to C89. Now, we detect if gnu99 is a viable target, if so, use that,
@@ -68,7 +72,8 @@ recompile things that didn't need to be recompiled
 executables
 
 
-* Apr 30 2017 1.0.0
+* 1.0.0 - Apr 30 2017
+
 - Add getpcmd to get the commandline string (optionally quoted) of a given pid
 - Add isparentof to determine if a pid is the parent of another pid, at any
 level (direct parent, parent-of-parent, etc)
@@ -79,6 +84,8 @@ level (direct child, child-of-child, etc)
 - Error check that integer arguments are integers
 
 
+* 0.1.0 - Nov 4 2016
 
-* Nov 4 2016 0.1.0
 - Initial Release
+
+
