@@ -141,9 +141,9 @@ static char **split_lines(char *inputStr, size_t *_numLines)
     int retIdx = 0;
 
     char *cur;
-    
+
     size_t numLines;
-    
+
 
     #if SPLIT_LINES_CALC_SIZE == 0
       /* 
@@ -159,11 +159,11 @@ static char **split_lines(char *inputStr, size_t *_numLines)
           if ( *cur == '\n' )
               numLines += 1;
       }
-   
+
       ret = malloc( sizeof(char *) * numLines);
     #endif
 
- 
+
     /* Assign our first line at the string start */
     ret[ retIdx++ ] = inputStr;
     for( cur=inputStr; *cur != '\0'; cur++ )
@@ -466,7 +466,7 @@ int main(int argc, char* argv[])
           lines = NULL;
         #endif
     }
-        
+
 
 __cleanup_and_exit:
 
