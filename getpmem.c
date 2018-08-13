@@ -441,7 +441,7 @@ int main(int argc, char* argv[])
         if ( statContentsSize == 0 )
         {
             printProcessInfoHeader(curPid, NULL, 0);
-            fprintf(stderr, "Error reading memory information for pid=%u. Error %d: %s\n", curPid, errno, strerror(errno));
+            fprintf(stderr, "Failed reading memory information for pid=%u.\n  Error %d: %s\n", curPid, errno, strerror(errno));
             printProcessInfoFooter();
             returnCode = ENOENT; /* error 2, No such file or directory */
             continue;
