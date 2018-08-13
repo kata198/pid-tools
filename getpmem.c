@@ -198,6 +198,43 @@ static char **split_lines(char *inputStr, size_t *_numLines)
 }
 
 
+static inline void printProcessInfoHeader(pid_t curPid, char **lines, size_t numLines)
+{
+    static const char *UNKNOWN_NAME = "UNKNOWN";
+    char *namePtr = NULL;
+
+    if ( lines != NULL )
+    {
+        int i;
+        char *curLine;
+
+        static const uint32_t NAME_STR = ('e' << 24) + ('m' << 16) + ('a' << 8) + 'N';
+
+        for( i=0; i < numLines; i++ )
+        {
+            curLine = lines[i];
+            if ( ((uint32_t *)curLine)[0] == NAME_STR && curLine[4] == ':' )
+            {
+                namePtr = &curLine[5];
+                while( *namePtr == '\t' || *namePtr == ' ' )
+                    namePtr += 1;
+                break;
+            }
+        }
+    }
+
+    if ( unlikely( namePtr == NULL ) )
+        namePtr = (char *)UNKNOWN_NAME;
+
+    printf("Memory info for pid: %d ( %s )\n", curPid, namePtr);
+    puts("----------------------------------------");
+}
+
+static inline void printProcessInfoFooter(void)
+{
+    puts("========================================\n");
+}
+
 /**
  * printRssLines - Print lines associated with the RSS format (-r)
  *
@@ -397,14 +434,15 @@ int main(int argc, char* argv[])
     for( i=0; i < numPids; i++ )
     {
         curPid = allPids[i];
-        printf("Memory info for pid: %d\n", curPid);
-        puts("----------------------------------------");
+
 
         errno = 0;
         statContentsSize = read_status_contents(curPid, &statContents);
         if ( statContentsSize == 0 )
         {
+            printProcessInfoHeader(curPid, NULL, 0);
             fprintf(stderr, "Error reading memory information for pid=%u. Error %d: %s\n", curPid, errno, strerror(errno));
+            printProcessInfoFooter();
             returnCode = ENOENT; /* error 2, No such file or directory */
             continue;
         }
@@ -412,12 +450,14 @@ int main(int argc, char* argv[])
 
         lines = split_lines(statContents, &numLines);
 
+        printProcessInfoHeader(curPid, lines, numLines);
+
         if ( !!( outputMode & OUTPUT_MODE_RSS ) )
         {
             printRssLines(lines, numLines);
         }
 
-        puts("========================================\n");
+        printProcessInfoFooter();
         #if SPLIT_LINES_CALC_SIZE == 1
           /* If SPLIT_LINES_CALC_SIZE is 0, we are using a static buffer
            *   so don't free it.
