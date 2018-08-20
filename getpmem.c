@@ -33,7 +33,12 @@
 
 const volatile char *copyright = "getpmem - Copyright (c) 2018 Tim Savannah.";
 
-static inline void usage()
+static inline void print_version(void)
+{
+    fprintf(stderr, "getpmem version %s by Timothy Savannah\n", PID_TOOLS_VERSION);
+}
+
+static inline void print_usage(void)
 {
     fputs("Usage: getpmem (Options) [pid] (Optional: [pid2] [pid..N])\n", stderr);
     fputs("  Prints the memory usage information of one or more pids\n\n", stderr);
@@ -51,6 +56,9 @@ static inline void usage()
 "If no mode is provided, '-r' (RSS) mode is selected.\n" \
 "\n"
     , stderr);
+
+    /* Print the version at the bottom of usage */
+    print_version();
 }
 
 
@@ -400,12 +408,12 @@ int main(int argc, char* argv[])
             }
             else if ( strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0 )
             {
-                usage();
+                print_usage();
                 goto __cleanup_and_exit;
             }
             else if ( strcmp(argv[i], "--version") == 0 )
             {
-                fprintf(stderr, "\ngetpmem version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
+                print_version();
                 goto __cleanup_and_exit;
             }
             else
@@ -419,7 +427,7 @@ int main(int argc, char* argv[])
     if ( numPids == 0 )
     {
         fprintf(stderr, "Missing any pids on which to report!\n\n");
-        usage();
+        print_usage();
         goto __cleanup_and_exit;
     }
 
