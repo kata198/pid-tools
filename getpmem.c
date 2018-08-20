@@ -26,6 +26,18 @@
 
 #define OUTPUT_MODE_RSS 1
 
+/* outputUnitOptions - enum for all possible output formats */
+enum outputUnitOptions {
+    OUTPUT_UNITS_NONE = 0,
+    OUTPUT_UNITS_KILOBYTES = 1,
+    OUTPUT_UNITS_MEGABYTES = 2
+};
+
+/* LABELS_OUTPUT_UNITS - Labels for the various units.
+ *    index matches the enum outputUnitOptions values
+ */
+static const char *LABELS_OUTPUT_UNITS[] = { "", "kB", "mB" };
+
 /* The actual size as of linux 4.17.13 is around 1050 bytes.
  *   So overkill by a factor of 4. Bwahahahahaha!
  */
@@ -53,7 +65,14 @@ static inline void print_usage(void)
 "\n" \
 "         -r              - Print RSS (Resident Memory Size) info\n" \
 "\n" \
-"If no mode is provided, '-r' (RSS) mode is selected.\n" \
+"\n" \
+"  If no mode is provided, '-r' (RSS) mode is selected.\n" \
+"\n" \
+"     Output Units:\n" \
+"       (select one for the units to use in output)\n" \
+"\n"
+"         -k              - Output in kilobytes (kB, 1000 bytes) [default]\n" \
+"         -m              - Output in megabytes (mB, 1000 kB)\n" \
 "\n"
     , stderr);
 
@@ -61,6 +80,31 @@ static inline void print_usage(void)
     print_version();
 }
 
+/**
+ *  convert_value - Converts an extracted value into the desired unit
+ *                    and as a string.
+ *
+ *                   Converting to a string allowed lining up the output
+ *
+ *      stringValue - A pointer to allocated memory which will hold the result
+ *
+ *      extractedValue - The kB value extracted from the "status" file
+ *
+ *      outputUnits -  Enumerated integer value which describes the desired
+ *                        output units.
+ */
+static inline void convert_value(char *stringValue, unsigned long int extractedValue, enum outputUnitOptions outputUnits)
+{
+    static double convertedValue;
+
+    switch(outputUnits)
+    {
+        case OUTPUT_UNITS_MEGABYTES:
+            convertedValue = extractedValue / 1000.0;
+            break;
+    }
+    sprintf(stringValue, "%.3f", convertedValue);
+}
 
 
 /**
@@ -258,7 +302,7 @@ RssShmem:              0 kB
 VmRSS:              5548 kB
  *
  */
-static void printRssLines(char **lines, size_t numLines)
+static void printRssLines(char **lines, size_t numLines, enum outputUnitOptions outputUnits)
 {
     int rssAnonIdx = 0;
     int rssFileIdx = 0;
@@ -336,26 +380,68 @@ static void printRssLines(char **lines, size_t numLines)
         }
     } /* end for loop */
 
-    /* Only print the things we matched. */
-    if ( rssAnonIdx )
-        printf("%s\n", lines[rssAnonIdx]);
-    if ( rssFileIdx )
-        printf("%s\n", lines[rssFileIdx]);
-    if ( rssShmemIdx )
-        printf("%s\n", lines[rssShmemIdx]);
-
-    if ( vmRssIdx )
+    if ( outputUnits == OUTPUT_UNITS_KILOBYTES )
     {
-        line = lines[vmRssIdx];
+        if ( rssAnonIdx )
+            printf("%s\n", lines[rssAnonIdx]);
+        if ( rssFileIdx )
+            printf("%s\n", lines[rssFileIdx]);
+        if ( rssShmemIdx )
+            printf("%s\n", lines[rssShmemIdx]);
 
-        /* Add an extra tab to VmRssIdx to it shows up aligned. */
-        for(i=0; line[i] != '\0'; i++ )
+        if ( vmRssIdx )
         {
-            putchar(line[i]);
-            if ( unlikely( line[i] == '\t' ) )
-                putchar('\t');
+            line = lines[vmRssIdx];
+
+            /* Add an extra tab to VmRssIdx to it shows up aligned. */
+            for(i=0; line[i] != '\0'; i++ )
+            {
+                putchar(line[i]);
+                if ( unlikely( line[i] == '\t' ) )
+                    putchar('\t');
+            }
+            putchar('\n');
         }
-        putchar('\n');
+    }
+    else
+    {
+        const char *unitLabel;
+        unsigned long int extractedValue;
+        static char stringValue[64];
+
+
+        unitLabel = LABELS_OUTPUT_UNITS[(int)outputUnits];
+
+        /* Only print the things we matched. */
+        if ( rssAnonIdx )
+        {
+            sscanf(lines[rssAnonIdx], "RssAnon:\t    %lu kB", &extractedValue);
+            convert_value(stringValue, extractedValue, outputUnits);
+                
+            printf("RssAnon:\t%8s %s\n", stringValue, unitLabel);
+        }
+        if ( rssFileIdx )
+        {
+            sscanf(lines[rssFileIdx], "RssFile:\t%lu kB", &extractedValue);
+            convert_value(stringValue, extractedValue, outputUnits);
+
+            printf("RssFile:\t%8s %s\n", stringValue, unitLabel);
+        }
+        if ( rssShmemIdx )
+        {
+            sscanf(lines[rssShmemIdx], "RssShmem:\t%lu kB", &extractedValue);
+            convert_value(stringValue, extractedValue, outputUnits);
+
+            printf("RssShmem:\t%8s %s\n", stringValue, unitLabel);
+        }
+        if ( vmRssIdx )
+        {
+            sscanf(lines[vmRssIdx], "VmRSS:\t%lu kB", &extractedValue);
+            convert_value(stringValue, extractedValue, outputUnits);
+
+            printf("VmRSS:\t\t%8s %s\n", stringValue, unitLabel);
+        }
+
     }
 
 }
@@ -381,6 +467,7 @@ int main(int argc, char* argv[])
 
     int returnCode = 0;
     int outputMode = 0;
+    enum outputUnitOptions outputUnits = OUTPUT_UNITS_NONE;
     int i;
 
     char *statContents = NULL;
@@ -416,9 +503,29 @@ int main(int argc, char* argv[])
                 print_version();
                 goto __cleanup_and_exit;
             }
+            else if ( strcmp(argv[i], "-k") == 0 )
+            {
+                if ( unlikely( outputUnits != OUTPUT_UNITS_NONE ) )
+                {
+                    fprintf(stderr, "Multiple output units defined. Please pick just one.\n\nRun `getpcmd --help' for usage information.\n");
+                    goto __cleanup_and_exit;
+                }
+
+                outputUnits = OUTPUT_UNITS_KILOBYTES;
+            }
+            else if ( strcmp(argv[i], "-m") == 0 )
+            {
+                if ( unlikely( outputUnits != OUTPUT_UNITS_NONE ) )
+                {
+                    fprintf(stderr, "Multiple output units defined. Please pick just one.\n\nRun `getpcmd --help' for usage information.\n");
+                    goto __cleanup_and_exit;
+                }
+
+                outputUnits = OUTPUT_UNITS_MEGABYTES;
+            }
             else
             {
-                fprintf(stderr, "Unknown option and invalid pid: %s\n", argv[i]);
+                fprintf(stderr, "Unknown option or invalid pid: %s\n\nRun `getpcmd --help' for usage information.\n", argv[i]);
                 goto __cleanup_and_exit;
             }
         }
@@ -435,6 +542,13 @@ int main(int argc, char* argv[])
     if ( outputMode == 0 )
         outputMode = OUTPUT_MODE_RSS;
 
+    /* If no output units selected, default to kilobytes */
+    if ( outputUnits == OUTPUT_UNITS_NONE )
+        outputUnits = OUTPUT_UNITS_KILOBYTES;
+
+    /* statContents - Allocate a large static buffer to 
+     *     store the /proc/pid/status contents 
+     */
     statContents = malloc( sizeof(char) * STATUS_BUFFER_SIZE );
 
     putchar('\n');
@@ -462,7 +576,7 @@ int main(int argc, char* argv[])
 
         if ( !!( outputMode & OUTPUT_MODE_RSS ) )
         {
-            printRssLines(lines, numLines);
+            printRssLines(lines, numLines, outputUnits);
         }
 
         printProcessInfoFooter();
