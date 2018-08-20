@@ -110,6 +110,9 @@ Example:
 	========================================
 
 
+See getpmem \`--help' for output options, including various units alternate to kB.
+
+
 isaparentof
 ----------
 
