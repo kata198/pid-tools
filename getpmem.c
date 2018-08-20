@@ -29,14 +29,19 @@
 /* outputUnitOptions - enum for all possible output formats */
 enum outputUnitOptions {
     OUTPUT_UNITS_NONE = 0,
-    OUTPUT_UNITS_KILOBYTES = 1,
-    OUTPUT_UNITS_MEGABYTES = 2
+    OUTPUT_UNITS_BYTES,
+    OUTPUT_UNITS_KILOBYTES,
+    OUTPUT_UNITS_KIBIBYTES,
+    OUTPUT_UNITS_MEGABYTES,
+    OUTPUT_UNITS_MEBIBYTES,
+    OUTPUT_UNITS_GIGABYTES,
+    OUTPUT_UNITS_GIBIBYTES
 };
 
 /* LABELS_OUTPUT_UNITS - Labels for the various units.
  *    index matches the enum outputUnitOptions values
  */
-static const char *LABELS_OUTPUT_UNITS[] = { "", "kB", "mB" };
+static const char *LABELS_OUTPUT_UNITS[] = { "", "B", "kB", "KiB", "mB", "MiB", "gB", "GiB" };
 
 /* The actual size as of linux 4.17.13 is around 1050 bytes.
  *   So overkill by a factor of 4. Bwahahahahaha!
@@ -71,8 +76,13 @@ static inline void print_usage(void)
 "     Output Units:\n" \
 "       (select one for the units to use in output)\n" \
 "\n"
-"         -k              - Output in kilobytes (kB, 1000 bytes) [default]\n" \
-"         -m              - Output in megabytes (mB, 1000 kB)\n" \
+"         -b              - Output in bytes        (B, 8 bits)\n" \
+"         -k              - Output in kilobytes    (kB, 1000 bytes) [default]\n" \
+"         -K              - Output in kibibyte     (KiB/KB, 1024 bytes)\n" \
+"         -m              - Output in megabytes    (mB, 1000 kB)\n" \
+"         -M              - Output in mebibytes    (MiB/MB, 1024 KiB)\n" \
+"         -g              - Output in gigabytes    (gB, 1000 mB)\n" \
+"         -G              - Output in gibibytes    (GiB/GB, 1024 MiB)\n" \
 "\n"
     , stderr);
 
@@ -99,8 +109,28 @@ static inline void convert_value(char *stringValue, unsigned long int extractedV
 
     switch(outputUnits)
     {
+        case OUTPUT_UNITS_BYTES:
+            convertedValue = (extractedValue * 1000.0);
+            /* Will always be a whole number, so don't include decimals */
+            sprintf(stringValue, "%.0f", convertedValue);
+            return;
+            break;
+        case OUTPUT_UNITS_KILOBYTES:
+            break;
+        case OUTPUT_UNITS_KIBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / 1024.0;
+            break;
         case OUTPUT_UNITS_MEGABYTES:
             convertedValue = extractedValue / 1000.0;
+            break;
+        case OUTPUT_UNITS_MEBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / (1024.0 * 1024.0);
+            break;
+        case OUTPUT_UNITS_GIGABYTES:
+            convertedValue = extractedValue / (1000.0 * 1000.0);
+            break;
+        case OUTPUT_UNITS_GIBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / (1024.0 * 1024.0 * 1024.0);
             break;
     }
     sprintf(stringValue, "%.3f", convertedValue);
@@ -475,6 +505,22 @@ int main(int argc, char* argv[])
 
     allPids = malloc( sizeof(pid_t) * argc );
 
+    /* _ENSURE_ONE_OUTPUT_UNIT - Ensures we have not already  defined output unit.
+     *      If we have, print errror message and exit.
+     */
+    #define _ENSURE_ONE_OUTPUT_UNIT(_newUnit) \
+        if ( unlikely( outputUnits != OUTPUT_UNITS_NONE ) ) \
+        { \
+            if ( unlikely( outputUnits == _newUnit ) ) \
+            { \
+                fprintf(stderr, "Warning: Selected output unit '%s' multiple times.\n", LABELS_OUTPUT_UNITS[_newUnit]); \
+            } \
+            else { \
+                fprintf(stderr, "Multiple output units defined. Please pick just one.\nTried to select unit as '%s' but already defined as '%s'!\n\nRun `getpcmd --help' for usage information.\n", LABELS_OUTPUT_UNITS[_newUnit], LABELS_OUTPUT_UNITS[outputUnits]); \
+                goto __cleanup_and_exit; \
+            } \
+        }
+    /* End _ENSURE_ONE_OUTPUT_UNIT macro */
 
     for( i=1; i < argc; i++ )
     {
@@ -503,25 +549,37 @@ int main(int argc, char* argv[])
                 print_version();
                 goto __cleanup_and_exit;
             }
-            else if ( strcmp(argv[i], "-k") == 0 )
+            else if ( strlen(argv[i]) == 2 && argv[i][0] == '-' )
             {
-                if ( unlikely( outputUnits != OUTPUT_UNITS_NONE ) )
+                #define _SELECT_OUTPUT_UNIT(_newUnit) _ENSURE_ONE_OUTPUT_UNIT(_newUnit); outputUnits = _newUnit;
+                switch( argv[i][1] )
                 {
-                    fprintf(stderr, "Multiple output units defined. Please pick just one.\n\nRun `getpcmd --help' for usage information.\n");
-                    goto __cleanup_and_exit;
+                    case 'b':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_BYTES);
+                        break;
+                    case 'k':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_KILOBYTES);
+                        break;
+                    case 'K':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_KIBIBYTES);
+                        break;
+                    case 'm':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_MEGABYTES);
+                        break;
+                    case 'M':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_MEBIBYTES);
+                        break;
+                    case 'g':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_GIGABYTES);
+                        break;
+                    case 'G':
+                        _SELECT_OUTPUT_UNIT(OUTPUT_UNITS_GIBIBYTES);
+                        break;
+                    default:
+                        fprintf(stderr, "Unknown option or invalid pid: %s\n\nRun `getpcmd --help' for usage information.\n", argv[i]);
+                        goto __cleanup_and_exit;
+                        break;
                 }
-
-                outputUnits = OUTPUT_UNITS_KILOBYTES;
-            }
-            else if ( strcmp(argv[i], "-m") == 0 )
-            {
-                if ( unlikely( outputUnits != OUTPUT_UNITS_NONE ) )
-                {
-                    fprintf(stderr, "Multiple output units defined. Please pick just one.\n\nRun `getpcmd --help' for usage information.\n");
-                    goto __cleanup_and_exit;
-                }
-
-                outputUnits = OUTPUT_UNITS_MEGABYTES;
             }
             else
             {
