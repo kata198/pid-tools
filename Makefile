@@ -201,7 +201,7 @@ getpenv.o : ${DEPS} getpenv.c
 	gcc ${USE_CFLAGS} getpenv.c -c -o getpenv.o
 
 getpmem.o : ${DEPS} getpmem.c
-	gcc ${USE_CFLAGS} getpmem.c -c -o getpmem.o
+	gcc ${USE_CFLAGS} -Wno-switch getpmem.c -c -o getpmem.o
 
 simple_int_map.o : ${DEPS} simple_int_map.h simple_int_map.c
 	gcc ${USE_CFLAGS} -DSHARED_LIB simple_int_map.c -c -o simple_int_map.o
