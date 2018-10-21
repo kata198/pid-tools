@@ -26,6 +26,9 @@
 
 #define OUTPUT_MODE_RSS 1
 
+/* uint64 - 8-byte unsigned integer (in both 32-bit and 64-bit mode) */
+typedef unsigned long long int uint64;
+
 /* outputUnitOptions - enum for all possible output formats */
 enum outputUnitOptions {
     OUTPUT_UNITS_NONE = 0,
@@ -37,6 +40,30 @@ enum outputUnitOptions {
     OUTPUT_UNITS_GIGABYTES,
     OUTPUT_UNITS_GIBIBYTES
 };
+
+
+/* struct pmem_rss_info - structure containing extracted RSS-related
+ *                         memory info.
+ *       (uint64s -- applicable for storing the whole-digit kB or B)
+ */
+struct pmem_rss_info {
+    uint64 rssAnon;
+    uint64 rssFile;
+    uint64 rssShmem;
+    uint64 vmRss;
+};
+
+/* struct pmem_rss_info_converted - structure containing converted RSS-related
+ *                                   memory info.
+ *       (double -- applicable for storing converted values above kB)
+ */
+struct pmem_rss_info_converted {
+    double rssAnon;
+    double rssFile;
+    double rssShmem;
+    double vmRss;
+};
+
 
 /* LABELS_OUTPUT_UNITS - Labels for the various units.
  *    index matches the enum outputUnitOptions values
@@ -70,6 +97,8 @@ static inline void print_usage(void)
 "\n" \
 "         -r              - Print RSS (Resident Memory Size) info\n" \
 "\n" \
+"         -t or --total   - Print total usage by all requested pids\n" \
+"                             in addition to individual\n" \
 "\n" \
 "  If no mode is provided, '-r' (RSS) mode is selected.\n" \
 "\n" \
@@ -90,8 +119,10 @@ static inline void print_usage(void)
     print_version();
 }
 
+/* Old convert_value function pre-5.0 -- straight from extracted integer to 8-spaced string */
+#if 0
 /**
- *  convert_value - Converts an extracted value into the desired unit
+ *  convert_value_str - Converts an extracted value into the desired unit
  *                    and as a string.
  *
  *                   Converting to a string allowed lining up the output
@@ -103,7 +134,7 @@ static inline void print_usage(void)
  *      outputUnits -  Enumerated integer value which describes the desired
  *                        output units.
  */
-static inline void convert_value(char *stringValue, unsigned long int extractedValue, enum outputUnitOptions outputUnits)
+static inline void convert_value_str(char *stringValue, unsigned long int extractedValue, enum outputUnitOptions outputUnits)
 {
     static double convertedValue;
 
@@ -134,6 +165,76 @@ static inline void convert_value(char *stringValue, unsigned long int extractedV
             break;
     }
     sprintf(stringValue, "%.3f", convertedValue);
+}
+#endif
+
+/**
+ * convert_value - Convert an extracted value (in kB) to a desired unit
+ *
+ *
+ *      @param extractedValue <uint64> - Extracted value (in kB)
+ *
+ *      @param outputUnits <enum outputUnitOptions> - Desired conversion
+ *
+ *
+ *      @return <double> - The value converted to given output unit, represented as a double
+ */
+static inline double convert_value(uint64 extractedValue, enum outputUnitOptions outputUnits)
+{
+    double convertedValue;
+
+    switch(outputUnits)
+    {
+        case OUTPUT_UNITS_BYTES:
+            convertedValue = (extractedValue * 1000.0);
+            break;
+        case OUTPUT_UNITS_KILOBYTES:
+            convertedValue = (double)extractedValue;
+            break;
+        case OUTPUT_UNITS_KIBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / 1024.0;
+            break;
+        case OUTPUT_UNITS_MEGABYTES:
+            convertedValue = extractedValue / 1000.0;
+            break;
+        case OUTPUT_UNITS_MEBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / (1024.0 * 1024.0);
+            break;
+        case OUTPUT_UNITS_GIGABYTES:
+            convertedValue = extractedValue / (1000.0 * 1000.0);
+            break;
+        case OUTPUT_UNITS_GIBIBYTES:
+            convertedValue = (extractedValue * 1000.0) / (1024.0 * 1024.0 * 1024.0);
+            break;
+    }
+
+    return convertedValue;
+}
+
+/**
+ *  convertRssValues - Converts a struct of extracted values ( pmem_rss_info )
+ *      into the desired unit and extracted struct format ( pmem_rss_info_converted )
+ *
+ *      @param extractedValues <pmem_rss_info *> - pointer to the extracted info
+ *
+ *      @param outputUnits <enum outputUnitOptions> -  Enumerated integer value which describes the desired
+ *                        output units.
+ *
+ *
+ *      @return
+ *
+ *           pmem_rss_info_converted structure filled with converted values
+ */
+static inline struct pmem_rss_info_converted convertRssValues(struct pmem_rss_info *extractedValues, enum outputUnitOptions outputUnits)
+{
+    struct pmem_rss_info_converted convertedValues;
+
+    convertedValues.rssAnon  = convert_value( extractedValues->rssAnon, outputUnits );
+    convertedValues.rssFile  = convert_value( extractedValues->rssFile, outputUnits );
+    convertedValues.rssShmem = convert_value( extractedValues->rssShmem, outputUnits );
+    convertedValues.vmRss    = convert_value( extractedValues->vmRss, outputUnits );
+    
+    return convertedValues;
 }
 
 
@@ -279,60 +380,17 @@ static char **split_lines(char *inputStr, size_t *_numLines)
     return ret;
 }
 
-
-static inline void printProcessInfoHeader(pid_t curPid, char **lines, size_t numLines)
-{
-    static const char *UNKNOWN_NAME = "UNKNOWN";
-    char *namePtr = NULL;
-
-    if ( lines != NULL )
-    {
-        int i;
-        char *curLine;
-
-        static const uint32_t NAME_STR = ('e' << 24) + ('m' << 16) + ('a' << 8) + 'N';
-
-        for( i=0; i < numLines; i++ )
-        {
-            curLine = lines[i];
-            if ( ((uint32_t *)curLine)[0] == NAME_STR && curLine[4] == ':' )
-            {
-                namePtr = &curLine[5];
-                while( *namePtr == '\t' || *namePtr == ' ' )
-                    namePtr += 1;
-                break;
-            }
-        }
-    }
-
-    if ( unlikely( namePtr == NULL ) )
-        namePtr = (char *)UNKNOWN_NAME;
-
-    printf("Memory info for pid: %d ( %s )\n", curPid, namePtr);
-    puts("----------------------------------------");
-}
-
-static inline void printProcessInfoFooter(void)
-{
-    puts("========================================\n");
-}
-
 /**
- * printRssLines - Print lines associated with the RSS format (-r)
+ * extractRssValuesFromLines - Extract RSS values from status lines
  *
- *    lines - /proc/$pid/status lines that have been split with split_lines
+ *    @param lines - /proc/$pid/status lines that have been split with split_lines
  *
- *    numLines - Number of lines in #lines array
+ *    @param numLines - Number of lines in #lines array
  *
- *  Example Output:
  *
-RssAnon:            1704 kB
-RssFile:            3844 kB
-RssShmem:              0 kB
-VmRSS:              5548 kB
- *
+ *    @return <struct pmem_rss_info> - RSS values in kB as extracted from status lines
  */
-static void printRssLines(char **lines, size_t numLines, enum outputUnitOptions outputUnits)
+static struct pmem_rss_info extractRssValuesFromLines(char **lines, size_t numLines)
 {
     int rssAnonIdx = 0;
     int rssFileIdx = 0;
@@ -340,6 +398,8 @@ static void printRssLines(char **lines, size_t numLines, enum outputUnitOptions 
     int vmRssIdx = 0;
 
     int checkRss = 1;
+
+    struct pmem_rss_info extractedValues;
 
     int i;
     char *line;
@@ -410,70 +470,186 @@ static void printRssLines(char **lines, size_t numLines, enum outputUnitOptions 
         }
     } /* end for loop */
 
-    if ( outputUnits == OUTPUT_UNITS_KILOBYTES )
+    /* Only print the things we matched. */
+    if ( rssAnonIdx )
     {
-        if ( rssAnonIdx )
-            printf("%s\n", lines[rssAnonIdx]);
-        if ( rssFileIdx )
-            printf("%s\n", lines[rssFileIdx]);
-        if ( rssShmemIdx )
-            printf("%s\n", lines[rssShmemIdx]);
-
-        if ( vmRssIdx )
-        {
-            line = lines[vmRssIdx];
-
-            /* Add an extra tab to VmRssIdx to it shows up aligned. */
-            for(i=0; line[i] != '\0'; i++ )
-            {
-                putchar(line[i]);
-                if ( unlikely( line[i] == '\t' ) )
-                    putchar('\t');
-            }
-            putchar('\n');
-        }
+        sscanf(lines[rssAnonIdx], "RssAnon:\t    %llu kB", &(extractedValues.rssAnon) );
     }
     else
     {
-        const char *unitLabel;
-        unsigned long int extractedValue;
-        static char stringValue[64];
-
-
-        unitLabel = LABELS_OUTPUT_UNITS[(int)outputUnits];
-
-        /* Only print the things we matched. */
-        if ( rssAnonIdx )
-        {
-            sscanf(lines[rssAnonIdx], "RssAnon:\t    %lu kB", &extractedValue);
-            convert_value(stringValue, extractedValue, outputUnits);
-                
-            printf("RssAnon:\t%8s %s\n", stringValue, unitLabel);
-        }
-        if ( rssFileIdx )
-        {
-            sscanf(lines[rssFileIdx], "RssFile:\t%lu kB", &extractedValue);
-            convert_value(stringValue, extractedValue, outputUnits);
-
-            printf("RssFile:\t%8s %s\n", stringValue, unitLabel);
-        }
-        if ( rssShmemIdx )
-        {
-            sscanf(lines[rssShmemIdx], "RssShmem:\t%lu kB", &extractedValue);
-            convert_value(stringValue, extractedValue, outputUnits);
-
-            printf("RssShmem:\t%8s %s\n", stringValue, unitLabel);
-        }
-        if ( vmRssIdx )
-        {
-            sscanf(lines[vmRssIdx], "VmRSS:\t%lu kB", &extractedValue);
-            convert_value(stringValue, extractedValue, outputUnits);
-
-            printf("VmRSS:\t\t%8s %s\n", stringValue, unitLabel);
-        }
-
+        extractedValues.rssAnon = 0;
+    }
+    if ( rssFileIdx )
+    {
+        sscanf(lines[rssFileIdx], "RssFile:\t%llu kB", &(extractedValues.rssFile) );
+    }
+    else
+    {
+        extractedValues.rssFile = 0;
+    }
+    if ( rssShmemIdx )
+    {
+        sscanf(lines[rssShmemIdx], "RssShmem:\t%llu kB", &(extractedValues.rssShmem) );
+    }
+    else
+    {
+        extractedValues.rssShmem = 0;
+    }
+    if ( vmRssIdx )
+    {
+        sscanf(lines[vmRssIdx], "VmRSS:\t%llu kB", &(extractedValues.vmRss) );
+    }
+    else
+    {
+        extractedValues.vmRss = 0;
     }
 
+    return extractedValues;
+}
+
+static inline void printProcessInfoHeader(pid_t curPid, char **lines, size_t numLines)
+{
+    static const char *UNKNOWN_NAME = "UNKNOWN";
+    char *namePtr = NULL;
+
+    if ( lines != NULL )
+    {
+        int i;
+        char *curLine;
+
+        static const uint32_t NAME_STR = ('e' << 24) + ('m' << 16) + ('a' << 8) + 'N';
+
+        for( i=0; i < numLines; i++ )
+        {
+            curLine = lines[i];
+            if ( ((uint32_t *)curLine)[0] == NAME_STR && curLine[4] == ':' )
+            {
+                namePtr = &curLine[5];
+                while( *namePtr == '\t' || *namePtr == ' ' )
+                    namePtr += 1;
+                break;
+            }
+        }
+    }
+
+    if ( unlikely( namePtr == NULL ) )
+        namePtr = (char *)UNKNOWN_NAME;
+
+    printf("Memory info for pid: %d ( %s )\n", curPid, namePtr);
+    puts("----------------------------------------");
+}
+
+static inline void printTotalInfoHeader(void)
+{
+    puts("Total memory info for all requested pids");
+    puts("----------------------------------------");
+}
+
+static inline void printProcessInfoFooter(void)
+{
+    puts("========================================");
+}
+
+/**
+ * prorcessRssLines - Process status lines associated with the RSS format (-r)
+ *
+ *    @param lines - /proc/$pid/status lines that have been split with split_lines
+ *
+ *    @param numLines - Number of lines in #lines array
+ *
+ *    @param outputUnits <enum outputUnitOptions> - The desired output unit
+ *
+ *    @param rssInfoTotal <struct pmem_rss_info *> - If NULL, totals will be skipped.
+ *                              Otherwise, the processed rss values will be added to the totals.
+ *
+ *
+ *    @return <pmem_rss_info_converted> - The converted fields extracted from provided lines and
+ *                                          converted to the requested output unit
+ */
+static struct pmem_rss_info_converted processRssLines(char **lines, size_t numLines, enum outputUnitOptions outputUnits, struct pmem_rss_info *rssInfoTotal)
+{
+
+    struct pmem_rss_info thisRssInfo;
+    struct pmem_rss_info_converted thisRssInfoConverted;
+
+
+    thisRssInfo = extractRssValuesFromLines(lines, numLines);
+
+    if ( rssInfoTotal != NULL )
+    {
+        rssInfoTotal->rssAnon += thisRssInfo.rssAnon;
+        rssInfoTotal->rssFile  += thisRssInfo.rssFile;
+        rssInfoTotal->rssShmem += thisRssInfo.rssShmem;
+        rssInfoTotal->vmRss    += thisRssInfo.vmRss;
+    }
+
+    thisRssInfoConverted = convertRssValues(&thisRssInfo, outputUnits);
+
+    return thisRssInfoConverted;
+}
+
+/**
+ * get_unit_label - Get the unit label associated with the requested unit
+ *
+ *      @param outputUnits - The desired output unit
+ *
+ *
+ *      @return <const char*> - A pointer to a string representing the requested unit.
+ *                               This is static data and should not be freed.
+ */
+static inline const char* get_unit_label(enum outputUnitOptions outputUnits)
+{
+    return LABELS_OUTPUT_UNITS[ (int)outputUnits ];
+}
+
+
+static inline void printRssInfoConverted
+    (struct pmem_rss_info_converted thisRssInfoConverted, enum outputUnitOptions outputUnits, const char *unitLabel)
+{
+
+    if ( outputUnits == OUTPUT_UNITS_BYTES || outputUnits == OUTPUT_UNITS_KILOBYTES )
+    {
+        /* If bytes or kB, we are going to print as integers */
+        printf("RssAnon:\t%8llu %s\n", (uint64) thisRssInfoConverted.rssAnon, unitLabel);
+        printf("RssFile:\t%8llu %s\n", (uint64) thisRssInfoConverted.rssFile, unitLabel);
+        printf("RssShmem:\t%8llu %s\n", (uint64) thisRssInfoConverted.rssShmem, unitLabel);
+        printf("VmRSS:\t\t%8llu %s\n", (uint64) thisRssInfoConverted.vmRss, unitLabel);
+    }
+    else
+    {
+        /* Otherwise, we will print as a double / decimal */
+        printf("RssAnon:\t%8.3F %s\n", thisRssInfoConverted.rssAnon, unitLabel);
+        printf("RssFile:\t%8.3F %s\n", thisRssInfoConverted.rssFile, unitLabel);
+        printf("RssShmem:\t%8.3F %s\n", thisRssInfoConverted.rssShmem, unitLabel);
+        printf("VmRSS:\t\t%8.3F %s\n", thisRssInfoConverted.vmRss, unitLabel);
+    }
+
+}
+
+static inline void printRssInfo
+    (struct pmem_rss_info thisRssInfo, enum outputUnitOptions outputUnits, const char *unitLabel)
+{
+
+    /* If bytes or kB, we are going to print as integers */
+    printf("RssAnon:\t%8llu %s\n", thisRssInfo.rssAnon, unitLabel);
+    printf("RssFile:\t%8llu %s\n", thisRssInfo.rssFile, unitLabel);
+    printf("RssShmem:\t%8llu %s\n", thisRssInfo.rssShmem, unitLabel);
+    printf("VmRSS:\t\t%8llu %s\n", thisRssInfo.vmRss, unitLabel);
+
+}
+
+
+static void printRssLines(char **lines, size_t numLines, enum outputUnitOptions outputUnits, struct pmem_rss_info *rssInfoTotal)
+{
+
+    struct pmem_rss_info_converted thisRssInfoConverted;
+    const char *unitLabel;
+
+    thisRssInfoConverted = processRssLines(lines, numLines, outputUnits, rssInfoTotal);
+
+    unitLabel = get_unit_label(outputUnits);
+
+    printRssInfoConverted( thisRssInfoConverted, outputUnits, unitLabel);
 }
 
 
@@ -502,6 +678,12 @@ int main(int argc, char* argv[])
 
     char *statContents = NULL;
     size_t statContentsSize;
+
+    /* totalInfo - If we have the "total flag" we will allocate this.
+     *               Allocated vs NULL is the difference in the api,
+     *                so no need for a flag.
+     */
+    struct pmem_rss_info *totalInfo = NULL;
 
     allPids = malloc( sizeof(pid_t) * argc );
 
@@ -538,6 +720,10 @@ int main(int argc, char* argv[])
             if ( strcmp(argv[i], "-r") == 0 )
             {
                 outputMode |= OUTPUT_MODE_RSS;
+            }
+            else if ( strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--total") == 0 )
+            {
+                totalInfo = calloc(1, sizeof(struct pmem_rss_info));
             }
             else if ( strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0 )
             {
@@ -634,10 +820,12 @@ int main(int argc, char* argv[])
 
         if ( !!( outputMode & OUTPUT_MODE_RSS ) )
         {
-            printRssLines(lines, numLines, outputUnits);
+            printRssLines(lines, numLines, outputUnits, totalInfo);
         }
 
         printProcessInfoFooter();
+        if ( likely( (i + 1) != numPids ) )
+            putchar('\n');
         #if SPLIT_LINES_CALC_SIZE == 1
           /* If SPLIT_LINES_CALC_SIZE is 0, we are using a static buffer
            *   so don't free it.
@@ -645,6 +833,21 @@ int main(int argc, char* argv[])
           free(lines);
           lines = NULL;
         #endif
+    }
+
+    if ( totalInfo != NULL )
+    {
+        struct pmem_rss_info_converted totalInfoConverted;
+
+        totalInfoConverted = convertRssValues( totalInfo, outputUnits );
+
+        printProcessInfoFooter();
+        putchar('\n');
+        printTotalInfoHeader();
+
+        printRssInfoConverted( totalInfoConverted, outputUnits, get_unit_label(outputUnits) );
+
+        printProcessInfoFooter();
     }
 
 
@@ -658,6 +861,9 @@ __cleanup_and_exit:
 
     if ( lines != NULL )
         free(lines);
+
+    if ( totalInfo != NULL )
+        free(totalInfo);
 
     return returnCode;
 }
