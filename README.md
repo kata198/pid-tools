@@ -110,7 +110,7 @@ Example:
 	========================================
 
 
-See getpmem \`--help' for output options, including various units alternate to kB.
+See getpmem \`--help' for output options, including various units alternate to kB and a "totaling" mode.
 
 
 isaparentof
