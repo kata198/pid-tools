@@ -78,7 +78,7 @@ LAST_LDFLAGS=$(shell cat .last_ldflags)
 DESTDIR ?= /
 
 # Guess prefix based on if /usr/bin is writeable, otherwise use $HOME
-PREFIX ?= $(shell test -w "${DESTDIR}" && echo "/usr" || echo "${HOME}")
+PREFIX ?= $(shell (test -e "${DESTDIR}" -a -w "${DESTDIR}" || test ! -e "${DESTDIR}" -a -w "`dirname ${DESTDIR}`" ) && echo "/usr" || echo "${HOME}")
 
 INSTALLDIR = "${DESTDIR}/${PREFIX}"
 
