@@ -57,7 +57,7 @@
   #define ALWAYS_INLINE_EXE_ONLY
 #endif
 
-STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_VERSION = "4.0.0";
+STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_VERSION = "5.0.0";
 STATIC_SHARED_ONLY MAYBE_UNUSED const volatile char *PID_TOOLS_COPYRIGHT = "Copyright (c) 2018 Timothy Savannah All Rights Reserved, licensed under GNU General Purpose License version 2";
 
 #endif
