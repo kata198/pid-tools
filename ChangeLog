@@ -2,6 +2,10 @@
 
 - Add a new utility, "getpmem", which will take one or more pids and print memory usage info on the related processes.
 
+    * Supports extracting memory info from mulitple pids
+    * Supports a "totaling" mode to total memory from all requested pids
+    * Supports conversion into all 1000-byte units (e.x. kB, mB) and 1024 units (e.x. KiB, MiB) from byte up to giga
+
 
 * 4.0.0 - Jun 24 2018
 
