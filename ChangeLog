@@ -1,4 +1,4 @@
-* 5.0.0 - ??? ?? ????
+* 5.0.0 - Oct 21 2018
 
 - Add a new utility, "getpmem", which will take one or more pids and print memory usage info on the related processes.
 
