@@ -1,3 +1,12 @@
+* 5.0.1 - Oct 21 2018
+
+- Fix an issue in package builds when DESTDIR is provided to "make install", but DESTDIR/PREFIX (PREFIX defaults to /usr) doesn't exist, it would try to install to $HOME/usr. It is common to install into an empty pkgdir and thus the "/usr" dir doesn't yet exist.
+
+The workaround was to define both DESTDIR and PREFIX like: make install DESTDIR="$pkgdir" PREFIX="/"
+
+But it has been fixed to work as expected with just: make install DESTDIR="$pkgdir"
+
+
 * 5.0.0 - Oct 21 2018
 
 - Add a new utility, "getpmem", which will take one or more pids and print memory usage info on the related processes.
