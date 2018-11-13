@@ -31,8 +31,8 @@ const volatile char *copyright = "getpcmd - Copyright (c) 2017 Tim Savannah.";
  */
 static inline void usage()
 {
-    fputs("Usage: getpcmd (Options) [pid]\n", stderr);
-    fputs("  Prints the commandline string of a given pid\n", stderr);
+    fputs("Usage: getpcmd (Options) [pid] (Optional: [pid2] [pid3])\n", stderr);
+    fputs("  Prints the commandline string of given pids\n", stderr);
     fputs("\n  Options:\n\n     --quote              Quote the command arguments in output\n\n", stderr);
 }
 
@@ -208,71 +208,79 @@ int main(int argc, char* argv[])
 {
 
     pid_t pid;
+    pid_t *pids;
+    unsigned int numPids = 0;
     int quoteArgs = 0;
-    char *pidStrPtr;
+    int i;
+    int ret = 0;
 
 
     /* PARSE ARGS */
-    if ( unlikely (argc != 2 && argc != 3 ) )
+    if ( unlikely (argc < 2 ) )
     {
 _invalid_arg_exit:
-        fputs("Invalid number of arguments.\n\n", stderr);
+        fprintf(stderr, "Too few arguments. Run `%s --help' to see usage.\n\n", argv[0]);
         usage();
         return 1;
     }
 
-    if ( unlikely(strncmp("-h", argv[1], 2) == 0 || strncmp("--help", argv[1], 6) == 0) )
-    {
-        usage();
-        return 0;
-    }
-    if ( unlikely(strncmp("--version", argv[1], 9) == 0) )
-    {
-        fprintf(stderr, "getpcmd version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
-        return 0;
-    }
+    pids = alloca(sizeof(pid_t) * (argc-1));
 
-
-    if ( unlikely(strncmp("--quote", argv[1], 7) == 0) )
+    for(i=1; i < argc; i++)
     {
-        if ( unlikely(argc == 2) )
+        char *arg = argv[i];
+
+        if ( unlikely(strncmp("-h", arg, 2) == 0 || strncmp("--help", arg, 6) == 0) )
         {
-            goto _invalid_arg_exit;
+            usage();
+            return 0;
+        }
+        if ( unlikely(strncmp("--version", arg, 9) == 0) )
+        {
+            fprintf(stderr, "getpcmd version %s by Timothy Savannah\n\n", PID_TOOLS_VERSION);
+            return 0;
         }
 
-        quoteArgs = 1;
-        pidStrPtr = argv[2];
-    }
-    else
-    {
-        if( unlikely(argc > 2) )
+
+        if ( unlikely(strncmp("--quote", arg, 7) == 0) )
         {
-            fputs("Too many arguments or unknown option.\n\n", stderr);
-            usage();
+            if ( unlikely(argc == 2) )
+            {
+                goto _invalid_arg_exit;
+            }
+
+            quoteArgs = 1;
+            continue;
+        }
+
+
+        /* Convert and validate provided "pid" argument */
+        pid = strtoint(arg);
+        if ( unlikely(pid <= 0 ) )
+        {
+            fprintf(stderr, "Provided PID is not a valid integer: '%s'\n", arg);
             return 1;
         }
-        quoteArgs = 0;
-        pidStrPtr = argv[1];
+        pids[numPids++] = pid;
     }
 
-
-    /* Convert and validate provided "pid" argument */
-    pid = strtoint(pidStrPtr);
-    if ( unlikely(pid <= 0 ) )
+    if( unlikely(numPids <= 0) )
     {
-        fprintf(stderr, "Provided PID is not a valid integer: '%s'\n", pidStrPtr);
+        fprintf(stderr, "Missing pid argument. See `%s --help' for usage.\n", argv[0]);
         return 1;
     }
 
-    /* Read and print the contents of the proc cmdline for this pid,
-     *   and exit with error(1) or success (0)
-     */
-    if ( unlikely( !read_and_print_proc_cmdline(pid, quoteArgs) ) )
+    for(i=0; i < numPids; i++)
     {
-        return 1;
+        /* Read and print the contents of the proc cmdline for this pid,
+         *   and exit with error(1) or success (0)
+         */
+        if ( unlikely( !read_and_print_proc_cmdline(pids[i], quoteArgs) ) )
+        {
+            ret = 1;
+        }
     }
 
-
-    return 0;
+    return ret;
 
 }
