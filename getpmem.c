@@ -206,6 +206,9 @@ static inline double convert_value(uint64 extractedValue, enum outputUnitOptions
         case OUTPUT_UNITS_GIBIBYTES:
             convertedValue = (extractedValue * 1000.0) / (1024.0 * 1024.0 * 1024.0);
             break;
+        default:
+            /* default to silence warning, assume KB */
+            convertedValue = (double)extractedValue;
     }
 
     return convertedValue;
