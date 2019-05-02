@@ -34,6 +34,8 @@ The **getcpids** tool takes a single pid (process-ID) as a commandline argument,
 
 It only prints the direct children, not any of their children (i.e. not recursive).
 
+You can pass the optional arg, "-r", and it will print all children recursively (their children, their children's children, etc).
+
 
 *Example:*
 
