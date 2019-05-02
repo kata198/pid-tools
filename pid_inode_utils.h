@@ -12,8 +12,6 @@
  *         optimizations which wouldn't otherwise get applied if not single unit 
  *         (e.x. inlining).
  *
- *   This is literally a copy of isaparentof except the args are switched.
- *   But a whole new file allows different help, etc
  */
 
 #ifndef _PID_INODE_UTILS_H
