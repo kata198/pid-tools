@@ -122,7 +122,7 @@ Determines if a given pid is a parent (of any level) to another pid (i.e. direct
 
 To see if something is explicitly a direct parent, use getppid.
 
-Read like "${first arg} is a parent of {second arg}"
+Read like "${first arg} is a parent of {second arg} ?"
 
 Example:
 
@@ -135,6 +135,8 @@ isachildof
 Determine if a given pid is a child (of any level) to another pid (i.e. direct child, child-of-child, etc. all the way down).
 
 To see if something is explicitly a direct child, compare child pid to \`getppid ${child}\`
+
+Read like "${first arg} is a child of {second arg} ?"
 
 Example:
 
